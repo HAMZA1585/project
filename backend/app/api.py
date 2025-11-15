@@ -21,6 +21,7 @@ def get_articles():
                 "source": article.source,
                 "content": article.content,
                 "category": article.category,
+                "location": article.location,  # <-- ADD THIS LINE
                 "date": article.date.isoformat() if article.date else None,
                 "sentiment": {
                     "label": article.sentiment_label,

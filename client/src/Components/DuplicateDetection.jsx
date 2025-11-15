@@ -213,10 +213,10 @@ const DuplicateDetection = ({ articles = [], duplicates = [], onDetectDuplicates
         <Card className="shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <Typography variant="h5" className="font-semibold text-gray-900 dark:text-white">
+              <Typography variant="h5" className="font-semibold text-gray-900text-white">
                 Duplicate Detection
               </Typography>
-              <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mt-1">
+              <Typography variant="body2" className="text-gray-600text-gray-400 mt-1">
                 Identify similar and duplicate articles across sources
               </Typography>
             </div>
@@ -238,17 +238,17 @@ const DuplicateDetection = ({ articles = [], duplicates = [], onDetectDuplicates
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <CircularProgress />
-                <Typography variant="body2" className="ml-2 text-gray-600 dark:text-gray-400">
+                <Typography variant="body2" className="ml-2 text-gray-600text-gray-400">
                   Detecting duplicates...
                 </Typography>
               </div>
             ) : duplicates.length === 0 ? (
               <div className="text-center py-8">
                 <CheckCircleIcon className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                <Typography variant="body1" className="text-gray-600 dark:text-gray-400">
+                <Typography variant="body1" className="text-gray-600text-gray-400">
                   No duplicates found
                 </Typography>
-                <Typography variant="body2" className="text-gray-500 dark:text-gray-500">
+                <Typography variant="body2" className="text-gray-500text-gray-500">
                   All articles appear to be unique
                 </Typography>
               </div>
@@ -265,7 +265,7 @@ const DuplicateDetection = ({ articles = [], duplicates = [], onDetectDuplicates
                     }
                     label="Select All"
                   />
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     {Object.values(selection).filter(Boolean).length} of {filteredDuplicates.length} groups selected
                   </Typography>
                 </div>
@@ -283,10 +283,10 @@ const DuplicateDetection = ({ articles = [], duplicates = [], onDetectDuplicates
                         variants={itemVariants}
                         layout
                       >
-                        <Accordion className="border border-gray-200 dark:border-gray-700">
+                        <Accordion className="border border-gray-200border-gray-700">
                           <AccordionSummary
                             expandIcon={<ExpandMoreIcon />}
-                            className="bg-gray-50 dark:bg-gray-800"
+                            className="bg-gray-50bg-gray-800"
                           >
                             <div className="flex items-center justify-between w-full mr-4">
                               <div className="flex items-center space-x-3">
@@ -304,7 +304,7 @@ const DuplicateDetection = ({ articles = [], duplicates = [], onDetectDuplicates
                                   <Typography variant="subtitle1" className="font-semibold">
                                     Duplicate Group #{index + 1}
                                   </Typography>
-                                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                                  <Typography variant="body2" className="text-gray-600text-gray-400">
                                     {group.articles.length} similar articles
                                   </Typography>
                                 </div>
@@ -315,16 +315,6 @@ const DuplicateDetection = ({ articles = [], duplicates = [], onDetectDuplicates
                                   size="small"
                                   color={group.confidence >= 80 ? 'error' : group.confidence >= 60 ? 'warning' : 'info'}
                                 />
-                                <Button
-                                  size="small"
-                                  startIcon={<ExpandMoreIcon />}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    // handleMergeGroup(group); // This function is removed
-                                  }}
-                                >
-                                  Merge
-                                </Button>
                               </div>
                             </div>
                           </AccordionSummary>
@@ -334,13 +324,13 @@ const DuplicateDetection = ({ articles = [], duplicates = [], onDetectDuplicates
                               {group.articles.map((article, articleIndex) => (
                                 <Paper
                                   key={article.id}
-                                  className="p-3 border border-gray-200 dark:border-gray-700"
+                                  className="p-3 border border-gray-200border-gray-700"
                                 >
                                   <div className="flex items-start justify-between">
                                     <div className="flex-1">
                                       <Typography 
                                         variant="h6" 
-                                        className="font-semibold text-gray-900 dark:text-white mb-2"
+                                        className="font-semibold text-gray-900text-white mb-2"
                                       >
                                         {article.title}
                                       </Typography>
@@ -363,7 +353,7 @@ const DuplicateDetection = ({ articles = [], duplicates = [], onDetectDuplicates
                                       
                                       <Typography 
                                         variant="body2" 
-                                        className="text-gray-600 dark:text-gray-400 line-clamp-2"
+                                        className="text-gray-600text-gray-400 line-clamp-2"
                                       >
                                         {article.content}
                                       </Typography>
@@ -420,11 +410,11 @@ const DuplicateDetection = ({ articles = [], duplicates = [], onDetectDuplicates
                   <Typography variant="subtitle1" className="font-semibold mb-2">
                     Merge Preview:
                   </Typography>
-                  <Paper className="p-3 border border-gray-200 dark:border-gray-700">
-                    <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Paper className="p-3 border border-gray-200border-gray-700">
+                    <Typography variant="body2" className="text-gray-600text-gray-400">
                       {mergePreview?.mergedTitles}
                     </Typography>
-                    <Typography variant="body2" className="text-gray-500 dark:text-gray-500 mt-2">
+                    <Typography variant="body2" className="text-gray-500text-gray-500 mt-2">
                       ({mergePreview?.count} articles)
                     </Typography>
                   </Paper>
@@ -575,8 +565,8 @@ const DuplicateDetection = ({ articles = [], duplicates = [], onDetectDuplicates
           </Dialog>
 
           {/* Analysis Stats */}
-          <Paper className="p-4 border border-gray-200 dark:border-gray-700">
-            <Typography variant="h6" className="font-semibold text-gray-900 dark:text-white mb-2">
+          <Paper className="p-4 border border-gray-200border-gray-700">
+            <Typography variant="h6" className="font-semibold text-gray-900text-white mb-2">
               Analysis Stats
             </Typography>
             <List dense>

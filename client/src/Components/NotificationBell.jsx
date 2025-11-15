@@ -39,13 +39,13 @@ const NotificationBell = () => {
   const getNotificationColor = (type) => {
     switch (type) {
       case 'breaking':
-        return 'border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800';
+        return 'border-red-200 bg-red-50bg-red-900/20border-red-800';
       case 'sentiment':
-        return 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800';
+        return 'border-yellow-200 bg-yellow-50bg-yellow-900/20border-yellow-800';
       case 'critical':
-        return 'border-orange-200 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800';
+        return 'border-orange-200 bg-orange-50bg-orange-900/20border-orange-800';
       default:
-        return 'border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800';
+        return 'border-blue-200 bg-blue-50bg-blue-900/20border-blue-800';
     }
   };
 
@@ -54,7 +54,7 @@ const NotificationBell = () => {
       {/* Notification Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300 dark:hover:text-gray-100 transition-all duration-200 hover:scale-105"
+        className="relative p-2 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100hover:bg-gray-700text-gray-300hover:text-gray-100 transition-all duration-200 hover:scale-105"
         title="Notifications"
       >
         <BellIcon className="w-6 h-6" />
@@ -77,25 +77,25 @@ const NotificationBell = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50"
+            className="absolute right-0 mt-2 w-96 bg-whitebg-gray-800 rounded-xl shadow-lg border border-gray-200border-gray-700 z-50"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900text-white">
                 Notifications
               </h3>
               <div className="flex items-center space-x-2">
                 {unreadCount > 0 && (
                   <button
                     onClick={() => dispatch(markAllAsRead())}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    className="text-sm text-blue-600text-blue-400 hover:underline"
                   >
                     Mark all read
                   </button>
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="p-1 rounded-lg hover:bg-gray-100hover:bg-gray-700"
                 >
                   <XMarkIcon className="w-4 h-4" />
                 </button>
@@ -105,20 +105,20 @@ const NotificationBell = () => {
             {/* Notifications List */}
             <div className="max-h-96 overflow-y-auto">
               {notifications.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                <div className="p-8 text-center text-gray-500text-gray-400">
                   <BellIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p>No notifications yet</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                <div className="divide-y divide-gray-200divide-gray-700">
                   {notifications.map((notification) => (
                     <motion.div
                       key={notification.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20 }}
-                      className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 ${
-                        !notification.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                      className={`p-4 hover:bg-gray-50hover:bg-gray-700/50 transition-colors duration-200 ${
+                        !notification.read ? 'bg-blue-50/50bg-blue-900/10' : ''
                       }`}
                     >
                       <div className="flex items-start space-x-3">
@@ -129,24 +129,24 @@ const NotificationBell = () => {
                           <div className="flex items-center justify-between">
                             <h4 className={`text-sm font-medium ${
                               !notification.read 
-                                ? 'text-gray-900 dark:text-white' 
-                                : 'text-gray-700 dark:text-gray-300'
+                                ? 'text-gray-900text-white' 
+                                : 'text-gray-700text-gray-300'
                             }`}>
                               {notification.title}
                             </h4>
                             <div className="flex items-center space-x-2">
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                              <span className="text-xs text-gray-500text-gray-400">
                                 {formatTime(notification.timestamp)}
                               </span>
                               <button
                                 onClick={() => dispatch(markAsRead(notification.id))}
-                                className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
+                                className="p-1 rounded hover:bg-gray-200hover:bg-gray-600"
                               >
                                 <XMarkIcon className="w-3 h-3" />
                               </button>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                          <p className="text-sm text-gray-600text-gray-400 mt-1 line-clamp-2">
                             {notification.message}
                           </p>
                           {notification.actionUrl && (
@@ -154,7 +154,7 @@ const NotificationBell = () => {
                               href={notification.actionUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1 inline-block"
+                              className="text-xs text-blue-600text-blue-400 hover:underline mt-1 inline-block"
                             >
                               View Details →
                             </a>
@@ -174,15 +174,15 @@ const NotificationBell = () => {
 
             {/* Footer */}
             {notifications.length > 0 && (
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="p-4 border-t border-gray-200border-gray-700">
                 <div className="flex items-center justify-between">
                   <button
                     onClick={() => dispatch(clearNotifications())}
-                    className="text-sm text-red-600 dark:text-red-400 hover:underline"
+                    className="text-sm text-red-600text-red-400 hover:underline"
                   >
                     Clear all
                   </button>
-                  <button className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                  <button className="flex items-center space-x-1 text-sm text-gray-600text-gray-400 hover:text-gray-900hover:text-white">
                     <Cog6ToothIcon className="w-4 h-4" />
                     <span>Settings</span>
                   </button>

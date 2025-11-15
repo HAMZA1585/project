@@ -276,10 +276,10 @@ const ContentCuration = () => {
       <motion.div variants={itemVariants}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <Typography variant="h4" className="font-bold text-gray-900 dark:text-white mb-2">
+            <Typography variant="h4" className="font-bold text-gray-900text-white mb-2">
               AI Content Curation
             </Typography>
-            <Typography variant="body1" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="body1" className="text-gray-600text-gray-400">
               Intelligent content processing, recommendations, and organization
             </Typography>
           </div>
@@ -317,7 +317,7 @@ const ContentCuration = () => {
       <motion.div variants={itemVariants}>
         <Paper className="p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <Typography variant="h6" className="font-semibold text-gray-900 dark:text-white">
+            <Typography variant="h6" className="font-semibold text-gray-900text-white">
               Processing Overview
             </Typography>
             <Chip 
@@ -333,7 +333,7 @@ const ContentCuration = () => {
                   <Typography variant="h4" className="font-bold text-blue-600">
                     {processingStats.total}
                   </Typography>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     Total Articles
                   </Typography>
                 </CardContent>
@@ -346,7 +346,7 @@ const ContentCuration = () => {
                   <Typography variant="h4" className="font-bold text-green-600">
                     {processingStats.recommendations}
                   </Typography>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     Recommendations
                   </Typography>
                 </CardContent>
@@ -359,7 +359,7 @@ const ContentCuration = () => {
                   <Typography variant="h4" className="font-bold text-orange-600">
                     {processingStats.duplicates}
                   </Typography>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     Duplicate Groups
                   </Typography>
                 </CardContent>
@@ -372,7 +372,7 @@ const ContentCuration = () => {
                   <Typography variant="h4" className="font-bold text-purple-600">
                     {processingStats.summaries}
                   </Typography>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     Summaries
                   </Typography>
                 </CardContent>
@@ -385,7 +385,7 @@ const ContentCuration = () => {
                   <Typography variant="h4" className="font-bold text-indigo-600">
                     {processingStats.categories}
                   </Typography>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     Categorized
                   </Typography>
                 </CardContent>
@@ -398,7 +398,7 @@ const ContentCuration = () => {
                   <Typography variant="h4" className="font-bold text-teal-600">
                     {Math.round((processingStats.processed / Math.max(processingStats.total, 1)) * 100)}%
                   </Typography>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     Processed
                   </Typography>
                 </CardContent>
@@ -409,14 +409,14 @@ const ContentCuration = () => {
           {loading && (
             <div className="mt-4">
               <div className="flex items-center justify-between mb-2">
-                <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                <Typography variant="body2" className="text-gray-600text-gray-400">
                   Processing articles...
                 </Typography>
-                <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                <Typography variant="body2" className="text-gray-600text-gray-400">
                   {processingStats.processed} / {processingStats.total}
                 </Typography>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-gray-200bg-gray-700 rounded-full h-2">
                 <div 
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${getProcessingProgress()}%` }}
@@ -435,7 +435,7 @@ const ContentCuration = () => {
             onChange={handleTabChange}
             variant="scrollable"
             scrollButtons="auto"
-            className="border-b border-gray-200 dark:border-gray-700"
+            className="border-b border-gray-200border-gray-700"
           >
             {tabs.map((tab, index) => (
               <Tab

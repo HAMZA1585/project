@@ -132,7 +132,7 @@ const SmartRecommendations = ({ articles = [], recommendations = [], onGenerateR
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <TrendingUpIcon className="text-blue-500" />
-              <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+              <Typography variant="h6" className="font-bold text-gray-900text-white">
                 Smart Recommendations
               </Typography>
               <Chip 
@@ -162,17 +162,17 @@ const SmartRecommendations = ({ articles = [], recommendations = [], onGenerateR
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <CircularProgress />
-            <Typography variant="body2" className="ml-2 text-gray-600 dark:text-gray-400">
+            <Typography variant="body2" className="ml-2 text-gray-600text-gray-400">
               Generating recommendations...
             </Typography>
           </div>
         ) : filteredRecommendations.length === 0 ? (
           <div className="text-center py-8">
             <StarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <Typography variant="body1" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="body1" className="text-gray-600text-gray-400">
               No recommendations available
             </Typography>
-            <Typography variant="body2" className="text-gray-500 dark:text-gray-500">
+            <Typography variant="body2" className="text-gray-500text-gray-500">
               Try adjusting your filter settings or refresh the data
             </Typography>
           </div>
@@ -189,13 +189,13 @@ const SmartRecommendations = ({ articles = [], recommendations = [], onGenerateR
                   key={recommendation.id || index}
                   variants={itemVariants}
                   layout
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className="border border-gray-200border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <Typography 
                         variant="h6" 
-                        className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2"
+                        className="font-semibold text-gray-900text-white mb-2 line-clamp-2"
                       >
                         {recommendation.article?.title}
                       </Typography>
@@ -224,7 +224,7 @@ const SmartRecommendations = ({ articles = [], recommendations = [], onGenerateR
                       
                       <Typography 
                         variant="body2" 
-                        className="text-gray-600 dark:text-gray-400 line-clamp-2"
+                        className="text-gray-600text-gray-400 line-clamp-2"
                       >
                         {recommendation.article?.content}
                       </Typography>

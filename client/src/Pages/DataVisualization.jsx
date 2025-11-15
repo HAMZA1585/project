@@ -37,7 +37,6 @@ import { toast } from 'react-toastify';
 
 // Import components
 import InteractiveDrillDownChart from '../Components/InteractiveDrillDownChart';
-import GeographicSentimentMap from '../Components/GeographicSentimentMap';
 
 // Import API
 import { fetchNews } from '../Services/api';
@@ -60,13 +59,6 @@ const DataVisualization = () => {
       icon: <BarChartIcon />,
       component: InteractiveDrillDownChart,
       description: 'Drill-down analysis with interactive charts'
-    },
-    { 
-      id: 'geographic', 
-      label: 'Geographic Map', 
-      icon: <MapIcon />,
-      component: GeographicSentimentMap,
-      description: 'Geographic sentiment mapping'
     }
   ];
 
@@ -146,7 +138,7 @@ const DataVisualization = () => {
         content: article.content,
         source: article.source,
         category: article.category || 'General',
-        region: getRegionFromSource(article.source),
+        region: article.location || 'Global', // <-- This line was Step 1
         date: article.date || new Date().toISOString(),
         timestamp: article.date || new Date().toISOString(),
         sentiment_score: article.sentiment?.score || 0.5,
@@ -156,7 +148,7 @@ const DataVisualization = () => {
         neutral: article.sentiment?.label === 'Neutral' ? 1 : 0,
         volume: 1,
         url: article.url
-      }));
+      })).filter(article => article.region !== 'Global'); // <-- ADD THIS FILTER
     }
     return generateMockData();
   }, [newsData]);
@@ -293,10 +285,10 @@ const DataVisualization = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <Typography variant="h4" className="font-bold text-gray-900 dark:text-white mb-2">
+            <Typography variant="h4" className="font-bold text-gray-900text-white mb-2">
               Interactive Data Visualization
             </Typography>
-            <Typography variant="body1" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="body1" className="text-gray-600text-gray-400">
               Advanced visualizations with drill-down capabilities, word clouds, network graphs, and geographic mapping
             </Typography>
           </div>
@@ -328,10 +320,10 @@ const DataVisualization = () => {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+                    <Typography variant="h6" className="font-bold text-gray-900text-white">
                       {visualizationSummary.totalArticles}
                     </Typography>
-                    <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                    <Typography variant="body2" className="text-gray-600text-gray-400">
                       Total Articles
                     </Typography>
                   </div>
@@ -346,10 +338,10 @@ const DataVisualization = () => {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+                    <Typography variant="h6" className="font-bold text-gray-900text-white">
                       {visualizationSummary.sources}
                     </Typography>
-                    <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                    <Typography variant="body2" className="text-gray-600text-gray-400">
                       Sources
                     </Typography>
                   </div>
@@ -364,10 +356,10 @@ const DataVisualization = () => {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+                    <Typography variant="h6" className="font-bold text-gray-900text-white">
                       {visualizationSummary.categories}
                     </Typography>
-                    <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                    <Typography variant="body2" className="text-gray-600text-gray-400">
                       Categories
                     </Typography>
                   </div>
@@ -382,10 +374,10 @@ const DataVisualization = () => {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+                    <Typography variant="h6" className="font-bold text-gray-900text-white">
                       {visualizationSummary.regions}
                     </Typography>
-                    <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                    <Typography variant="body2" className="text-gray-600text-gray-400">
                       Regions
                     </Typography>
                   </div>
@@ -400,37 +392,37 @@ const DataVisualization = () => {
       {/* Sentiment Distribution */}
       {visualizationSummary && (
         <Paper className="p-6 mb-8">
-          <Typography variant="h6" className="font-semibold text-gray-900 dark:text-white mb-4">
+          <Typography variant="h6" className="font-semibold text-gray-900text-white mb-4">
             Sentiment Distribution
           </Typography>
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Typography variant="h6" className="font-bold text-green-600 dark:text-green-400">
+              <div className="w-16 h-16 bg-green-100bg-green-900 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Typography variant="h6" className="font-bold text-green-600text-green-400">
                   {visualizationSummary.positivePercentage?.toFixed(1)}%
                 </Typography>
               </div>
-              <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+              <Typography variant="body2" className="text-gray-600text-gray-400">
                 Positive
               </Typography>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Typography variant="h6" className="font-bold text-red-600 dark:text-red-400">
+              <div className="w-16 h-16 bg-red-100bg-red-900 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Typography variant="h6" className="font-bold text-red-600text-red-400">
                   {visualizationSummary.negativePercentage?.toFixed(1)}%
                 </Typography>
               </div>
-              <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+              <Typography variant="body2" className="text-gray-600text-gray-400">
                 Negative
               </Typography>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Typography variant="h6" className="font-bold text-yellow-600 dark:text-yellow-400">
+              <div className="w-16 h-16 bg-yellow-100bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Typography variant="h6" className="font-bold text-yellow-600text-yellow-400">
                   {visualizationSummary.neutralPercentage?.toFixed(1)}%
                 </Typography>
               </div>
-              <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+              <Typography variant="body2" className="text-gray-600text-gray-400">
                 Neutral
               </Typography>
             </div>
@@ -443,7 +435,6 @@ const DataVisualization = () => {
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
-          variant="fullWidth"
           indicatorColor="primary"
           textColor="primary"
         >
@@ -500,7 +491,7 @@ const DataVisualization = () => {
                 checked={exportOptions.includeCharts}
                 onChange={(e) => setExportOptions(prev => ({ ...prev, includeCharts: e.target.checked }))}
               />
-              <label htmlFor="includeCharts" className="text-sm text-gray-700 dark:text-gray-300">
+              <label htmlFor="includeCharts" className="text-sm text-gray-700text-gray-300">
                 Include charts in export
               </label>
             </div>

@@ -368,7 +368,7 @@ def categorize_content():
             'error': 'Failed to categorize content'
         }), 500
 
-@ai_curation_bp.route('/process', methods=['POST'])
+@ai_curation_bp.route('/process-batch', methods=['POST'])
 def process_articles():
     """Process articles with all AI features"""
     try:

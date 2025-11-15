@@ -10,7 +10,8 @@ from app import create_app, db, rq
 from app.models import Article, Trend, SystemNotification
 from app.services.scraper import (
     fetch_from_dawn, fetch_from_daily_express, fetch_from_nation,
-    fetch_from_pakistan_times, fetch_from_pakistan_observer, fetch_from_urdu_point
+    fetch_from_pakistan_times, fetch_from_pakistan_observer, fetch_from_urdu_point,
+    fetch_from_newsapi, fetch_from_currents, fetch_from_guardian
 )
 from app.services.sentiment import analyze_sentiment
 from app.services.trend import analyze_news_trends
@@ -19,14 +20,21 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-# Source mapping for dynamic task creation (Pakistan-only sources)
-SOURCE_FUNCTIONS = {
+# Source mapping for page-by-page scraping tasks
+SCRAPING_FUNCTIONS = {
     'dawn': fetch_from_dawn,
     'daily_express': fetch_from_daily_express,
     'nation': fetch_from_nation,
     'pakistan_times': fetch_from_pakistan_times,
     'pakistan_observer': fetch_from_pakistan_observer,
     'urdu_point': fetch_from_urdu_point
+}
+
+# Source mapping for API batch tasks
+API_FUNCTIONS = {
+    'newsapi': fetch_from_newsapi,
+    'currents': fetch_from_currents,
+    'guardian': fetch_from_guardian
 }
 
 @rq.job('scraping', timeout='5m')
@@ -47,7 +55,7 @@ def scrape_source_task(source_name, limit=10):
             logger.info(f"Starting scraping task for source: {source_name}")
             
             # Get the appropriate scraping function
-            scrape_func = SOURCE_FUNCTIONS.get(source_name)
+            scrape_func = SCRAPING_FUNCTIONS.get(source_name)
             if not scrape_func:
                 raise ValueError(f"Unknown source: {source_name}")
             
@@ -352,9 +360,131 @@ def health_check_task():
                 'error': str(e)
             }
 
+@rq.job('scraping', timeout='5m')
+def scrape_api_source_task(source_name, limit=10):
+    """
+    Scrape articles from a specific API source (which returns a batch).
+    
+    Args:
+        source_name (str): Name of the API source to scrape
+        limit (int): Maximum number of articles to fetch
+    
+    Returns:
+        dict: Results of the scraping operation
+    """
+    app = create_app()
+    with app.app_context():
+        try:
+            logger.info(f"Starting API scraping task for source: {source_name}")
+            
+            # Get the appropriate scraping function
+            scrape_func = API_FUNCTIONS.get(source_name)
+            if not scrape_func:
+                raise ValueError(f"Unknown API source: {source_name}")
+            
+            # Scrape articles (this returns a full batch)
+            articles = scrape_func(limit=limit)
+            
+            if not articles:
+                logger.warning(f"No articles found for API source: {source_name}")
+                return {
+                    'source': source_name,
+                    'status': 'completed',
+                    'articles_found': 0,
+                    'articles_added': 0,
+                    'errors': []
+                }
+            
+            # Process and store articles
+            articles_added = 0
+            errors = []
+            
+            for article_data in articles:
+                try:
+                    # Check if article already exists
+                    if not article_data.get('url'):
+                        errors.append(f"Skipped article with no URL: {article_data.get('title')}")
+                        continue
+                    
+                    existing_article = Article.query.filter_by(url=article_data.get('url')).first()
+                    if existing_article:
+                        continue
+                    
+                    # Parse date
+                    article_date = None
+                    if article_data.get('date'):
+                        try:
+                            article_date = datetime.fromisoformat(article_data['date'].replace('Z', '+00:00'))
+                        except (ValueError, TypeError):
+                            logger.warning(f"Could not parse date: {article_data['date']}")
+                            article_date = None
+                    
+                    # Create new article
+                    new_article = Article(
+                        title=article_data.get('title'),
+                        url=article_data.get('url'),
+                        source=article_data.get('source'),
+                        content=article_data.get('content'),
+                        category=article_data.get('category'),
+                        date=article_date,
+                        location=article_data.get('location') # APIs might provide this
+                    )
+                    
+                    db.session.add(new_article)
+                    db.session.commit()
+                    
+                    articles_added += 1
+                    
+                    # Queue sentiment analysis task for the new article
+                    analyze_article_sentiment_task.queue(new_article.id)
+                    
+                    logger.info(f"Added article {new_article.id} from {source_name}")
+                    
+                except Exception as e:
+                    error_msg = f"Error processing article from {source_name}: {str(e)}"
+                    logger.error(error_msg)
+                    errors.append(error_msg)
+                    db.session.rollback()
+                    continue
+            
+            result = {
+                'source': source_name,
+                'status': 'completed',
+                'articles_found': len(articles),
+                'articles_added': articles_added,
+                'errors': errors
+            }
+            
+            logger.info(f"Completed API scraping task for {source_name}: {articles_added} articles added")
+            return result
+            
+        except Exception as e:
+            error_msg = f"API scraping task failed for {source_name}: {str(e)}"
+            logger.error(error_msg)
+            
+            try:
+                notification = SystemNotification(
+                    level='ERROR',
+                    message=error_msg,
+                    source=f'scraper_api:{source_name}'
+                )
+                db.session.add(notification)
+                db.session.commit()
+            except Exception as db_err:
+                logger.error(f"Failed to write notification to DB: {db_err}")
+                db.session.rollback()
+
+            return {
+                'source': source_name,
+                'status': 'failed',
+                'articles_found': 0,
+                'articles_added': 0,
+                'errors': [error_msg]
+            }
+
 def queue_all_scraping_tasks(limit=10):
     """
-    Queue scraping tasks for all available news sources.
+    Queue scraping tasks for all available news sources (both scraped and API).
     
     Args:
         limit (int): Maximum articles per source
@@ -366,13 +496,23 @@ def queue_all_scraping_tasks(limit=10):
     with app.app_context():
         job_ids = []
         
-        for source_name in SOURCE_FUNCTIONS.keys():
+        # Queue tasks for page-by-page scrapers
+        for source_name in SCRAPING_FUNCTIONS.keys():
             try:
                 job = scrape_source_task.queue(source_name, limit)
                 job_ids.append(job.id)
                 logger.info(f"Queued scraping task for {source_name} (Job ID: {job.id})")
             except Exception as e:
                 logger.error(f"Failed to queue task for {source_name}: {str(e)}")
+        
+        # Queue tasks for API batch scrapers
+        for source_name in API_FUNCTIONS.keys():
+            try:
+                job = scrape_api_source_task.queue(source_name, limit)
+                job_ids.append(job.id)
+                logger.info(f"Queued API scraping task for {source_name} (Job ID: {job.id})")
+            except Exception as e:
+                logger.error(f"Failed to queue API task for {source_name}: {str(e)}")
         
         return job_ids
 

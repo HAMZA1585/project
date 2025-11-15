@@ -48,18 +48,27 @@ const GeographicSentimentMap = ({
   const [minData, setMinData] = useState(1);
   const [maxData, setMaxData] = useState(100);
 
-  // Region coordinates (simplified world map)
+  // NEW SPREAD-OUT COORDINATES
   const regionCoordinates = {
-    'US': { x: 150, y: 200, name: 'United States' },
-    'UK': { x: 300, y: 150, name: 'United Kingdom' },
-    'Global': { x: 400, y: 250, name: 'Global' },
-    'Middle East': { x: 350, y: 220, name: 'Middle East' },
-    'Europe': { x: 320, y: 180, name: 'Europe' },
-    'Asia': { x: 450, y: 200, name: 'Asia' },
-    'Africa': { x: 320, y: 280, name: 'Africa' },
-    'Australia': { x: 500, y: 350, name: 'Australia' },
-    'Canada': { x: 120, y: 150, name: 'Canada' },
-    'South America': { x: 200, y: 320, name: 'South America' }
+    // North
+    'Peshawar': { x: 330, y: 130, name: 'Peshawar' },
+    'Islamabad': { x: 380, y: 150, name: 'Islamabad' },
+    'Rawalpindi': { x: 375, y: 170, name: 'Rawalpindi' },
+    
+    // Punjab (Plains)
+    'Sialkot': { x: 420, y: 210, name: 'Sialkot' },
+    'Gujranwala': { x: 390, y: 220, name: 'Gujranwala' },
+    'Lahore': { x: 400, y: 240, name: 'Lahore' },
+    'Faisalabad': { x: 350, y: 260, name: 'Faisalabad' },
+    'Multan': { x: 340, y: 300, name: 'Multan' },
+    // Balochistan
+    'Quetta': { x: 240, y: 290, name: 'Quetta' },
+    // Sindh
+    'Hyderabad': { x: 300, y: 370, name: 'Hyderabad' },
+    'Karachi': { x: 280, y: 400, name: 'Karachi' },
+    
+    // Fallback (moved to top-left corner)
+    'Global': { x: 50, y: 50, name: 'Global' }
   };
 
   // Color schemes
@@ -311,10 +320,10 @@ const GeographicSentimentMap = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <Typography variant="h6" className="font-semibold text-gray-900 dark:text-white">
+            <Typography variant="h6" className="font-semibold text-gray-900text-white">
               {title}
             </Typography>
-            <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="body2" className="text-gray-600text-gray-400">
               Click on regions to explore sentiment data
             </Typography>
           </div>
@@ -381,7 +390,7 @@ const GeographicSentimentMap = ({
           />
 
           <div>
-            <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mb-2">
+            <Typography variant="body2" className="text-gray-600text-gray-400 mb-2">
               Data Range: {minData} - {maxData}
             </Typography>
             <Slider
@@ -410,19 +419,19 @@ const GeographicSentimentMap = ({
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="absolute bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 pointer-events-none z-10"
+              className="absolute bg-whitebg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200border-gray-700 pointer-events-none z-10"
             >
-              <Typography variant="body2" className="font-semibold text-gray-900 dark:text-white">
+              <Typography variant="body2" className="font-semibold text-gray-900text-white">
                 <LocationIcon className="w-4 h-4 inline mr-1" />
                 {hoveredRegion.region}
               </Typography>
-              <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+              <Typography variant="body2" className="text-gray-600text-gray-400">
                 Articles: {hoveredRegion.totalCount}
               </Typography>
-              <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+              <Typography variant="body2" className="text-gray-600text-gray-400">
                 Avg Sentiment: {hoveredRegion.averageSentiment?.toFixed(3)}
               </Typography>
-              <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+              <Typography variant="body2" className="text-gray-600text-gray-400">
                 Positive: {hoveredRegion.positivePercentage?.toFixed(1)}%
               </Typography>
             </motion.div>
@@ -434,7 +443,7 @@ const GeographicSentimentMap = ({
           <Card className="mt-6">
             <CardContent>
               <div className="flex items-center justify-between mb-4">
-                <Typography variant="h6" className="font-semibold text-gray-900 dark:text-white">
+                <Typography variant="h6" className="font-semibold text-gray-900text-white">
                   <MapIcon className="w-5 h-5 inline mr-2" />
                   {selectedRegion.region}
                 </Typography>
@@ -447,22 +456,22 @@ const GeographicSentimentMap = ({
               </div>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={3}>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     <strong>Total Articles:</strong> {selectedRegion.totalCount}
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={3}>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     <strong>Average Sentiment:</strong> {selectedRegion.averageSentiment?.toFixed(3)}
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={3}>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     <strong>Sentiment Variance:</strong> {selectedRegion.sentimentVariance?.toFixed(3)}
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={3}>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     <strong>Positive:</strong> {selectedRegion.positivePercentage?.toFixed(1)}%
                   </Typography>
                 </Grid>
@@ -470,7 +479,7 @@ const GeographicSentimentMap = ({
               
               {/* Sentiment Distribution */}
               <div className="mt-4">
-                <Typography variant="subtitle2" className="font-semibold text-gray-900 dark:text-white mb-2">
+                <Typography variant="subtitle2" className="font-semibold text-gray-900text-white mb-2">
                   Sentiment Distribution
                 </Typography>
                 <div className="flex space-x-4">
@@ -497,37 +506,37 @@ const GeographicSentimentMap = ({
 
         {/* Statistics */}
         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+          <div className="text-center p-3 bg-gray-50bg-gray-800 rounded-lg">
+            <Typography variant="h6" className="font-bold text-gray-900text-white">
               {Object.keys(processedData).length}
             </Typography>
-            <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="caption" className="text-gray-600text-gray-400">
               Regions
             </Typography>
           </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+          <div className="text-center p-3 bg-gray-50bg-gray-800 rounded-lg">
+            <Typography variant="h6" className="font-bold text-gray-900text-white">
               {Object.values(processedData).reduce((sum, region) => sum + region.totalCount, 0)}
             </Typography>
-            <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="caption" className="text-gray-600text-gray-400">
               Total Articles
             </Typography>
           </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+          <div className="text-center p-3 bg-gray-50bg-gray-800 rounded-lg">
+            <Typography variant="h6" className="font-bold text-gray-900text-white">
               {Object.values(processedData).length > 0 ? 
                 (Object.values(processedData).reduce((sum, region) => sum + region.averageSentiment, 0) / Object.values(processedData).length).toFixed(3) : 0}
             </Typography>
-            <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="caption" className="text-gray-600text-gray-400">
               Global Avg Sentiment
             </Typography>
           </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+          <div className="text-center p-3 bg-gray-50bg-gray-800 rounded-lg">
+            <Typography variant="h6" className="font-bold text-gray-900text-white">
               {Object.values(processedData).length > 0 ? 
                 Math.max(...Object.values(processedData).map(region => region.totalCount)) : 0}
             </Typography>
-            <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="caption" className="text-gray-600text-gray-400">
               Max Articles
             </Typography>
           </div>

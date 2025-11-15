@@ -9,8 +9,6 @@ import SentimentPieChart from '../Components/SentimentPieChart.jsx';
 import Trends from '../Components/Trends.jsx';
 import TrendingTopics from '../Components/TrendingTopics.jsx';
 import NewsList from '../Components/NewsList.jsx';
-import StatCard from '../Components/StatCard.jsx';
-import SmartRecommendations from '../Components/SmartRecommendations.jsx';
 import { Card as UICard, CardContent as UICardContent, CardHeader as UICardHeader, CardTitle, CardDescription } from '../components/ui/card.jsx';
 import { NewspaperIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
@@ -82,96 +80,6 @@ const itemVariant = {
     }
   }
 };
-const mockNews = [
-  { 
-    id: 1, 
-    title: 'Stock Market Reaches All-Time High', 
-    url: 'https://www.ft.com/content/stock-market-all-time-high',
-    category: 'Business', 
-    sentiment: 'Positive', 
-    date: '2024-05-01', 
-    source: 'Financial Times', 
-    views: 15432,
-    content: 'The stock market has reached unprecedented heights today, with major indices posting record gains. Analysts attribute this surge to strong corporate earnings, positive economic indicators, and investor confidence in the current administration\'s economic policies. The Dow Jones Industrial Average closed at 35,000 points, while the S&P 500 and NASDAQ also posted significant gains. Market experts suggest this trend may continue in the coming weeks as more companies report their quarterly earnings.'
-  },
-  { 
-    id: 2, 
-    title: 'Earthquake Hits Northern Regions', 
-    url: 'https://www.bbc.com/news/earthquake-northern-regions',
-    category: 'Disaster', 
-    sentiment: 'Negative', 
-    date: '2024-05-10', 
-    source: 'BBC News', 
-    views: 28765,
-    content: 'A powerful earthquake measuring 7.2 on the Richter scale struck northern regions early this morning, causing widespread damage and casualties. Emergency services are working around the clock to rescue survivors and provide medical assistance. The quake\'s epicenter was located 50 kilometers north of the capital, affecting several major cities and rural areas. Government officials have declared a state of emergency and are coordinating international aid efforts. The death toll currently stands at 150, with over 1,000 injured and thousands displaced from their homes.'
-  },
-  { 
-    id: 3, 
-    title: 'PM Announces New Education Policy', 
-    url: 'https://www.dawn.com/news/education-policy-2024',
-    category: 'Politics', 
-    sentiment: 'Neutral', 
-    date: '2024-05-15', 
-    source: 'Dawn News', 
-    views: 12345,
-    content: 'The Prime Minister unveiled a comprehensive new education policy today, focusing on digital learning and skill development. The policy aims to modernize the education system and prepare students for the digital economy. Key initiatives include increased funding for technology in schools, teacher training programs, and partnerships with private sector companies. The policy also addresses issues of access to education in rural areas through online learning platforms. Critics have raised concerns about implementation challenges, while supporters praise the forward-thinking approach.'
-  },
-  { 
-    id: 4, 
-    title: 'Pakistan Wins Cricket Series', 
-    url: 'https://www.espn.com/cricket/pakistan-wins-series',
-    category: 'Sports', 
-    sentiment: 'Positive', 
-    date: '2024-05-20', 
-    source: 'ESPN', 
-    views: 34567,
-    content: 'Pakistan\'s cricket team secured a thrilling victory in the final match of the series, defeating their opponents by 5 wickets. The match went down to the wire, with the winning runs scored in the final over. Captain Babar Azam led from the front with a brilliant century, while the bowling attack restricted the opposition to a manageable total. This victory marks Pakistan\'s first series win in two years and has sparked celebrations across the country. The team\'s performance has renewed hopes for the upcoming World Cup tournament.'
-  },
-  { 
-    id: 5, 
-    title: 'Inflation Rate Rises to 30%', 
-    url: 'https://www.reuters.com/business/inflation-rate-rises-30-percent',
-    category: 'Economy', 
-    sentiment: 'Negative', 
-    date: '2024-05-25', 
-    source: 'Reuters', 
-    views: 23456,
-    content: 'The inflation rate has reached a new high of 30% this month, putting additional pressure on household budgets and business operations. Rising food prices, energy costs, and supply chain disruptions are the primary drivers of this increase. The central bank has announced emergency measures to curb inflation, including interest rate hikes and currency stabilization efforts. Economists warn that sustained high inflation could lead to economic instability and social unrest. The government is considering additional fiscal measures to support vulnerable populations.'
-  },
-  { 
-    id: 6, 
-    title: 'Tech Giant Launches New Smartphone', 
-    url: 'https://techcrunch.com/2024/05/05/tech-giant-launches-new-smartphone',
-    category: 'Technology', 
-    sentiment: 'Positive', 
-    date: '2024-05-05', 
-    source: 'TechCrunch', 
-    views: 18976,
-    content: 'The latest smartphone from the tech giant features groundbreaking AI capabilities and an innovative camera system. The device boasts a 6.7-inch OLED display, 5G connectivity, and a battery that lasts up to 48 hours on a single charge. The AI assistant can now perform complex tasks like photo editing and language translation in real-time. Early reviews praise the device\'s performance and user experience. The company expects strong sales based on pre-order numbers, which have already exceeded expectations.'
-  },
-  { 
-    id: 7, 
-    title: 'Climate Change Conference Concludes', 
-    url: 'https://www.theguardian.com/environment/climate-conference-2024',
-    category: 'Environment', 
-    sentiment: 'Neutral', 
-    date: '2024-05-18', 
-    source: 'The Guardian', 
-    views: 15678,
-    content: 'The international climate change conference concluded with mixed results, as world leaders agreed on some measures while failing to reach consensus on others. Key agreements include increased funding for renewable energy projects and stricter emissions targets for developed nations. However, disagreements over carbon pricing and financial assistance for developing countries remain unresolved. Environmental groups have expressed cautious optimism about the progress made, while calling for more ambitious action. The next conference is scheduled for next year in a different host country.'
-  },
-  { 
-    id: 8, 
-    title: 'New Medical Breakthrough Announced', 
-    url: 'https://www.medicalnews.com/breakthrough-cancer-treatment-2024',
-    category: 'Health', 
-    sentiment: 'Positive', 
-    date: '2024-05-22', 
-    source: 'Medical News', 
-    views: 20987,
-    content: 'Scientists have announced a major breakthrough in cancer treatment, with a new therapy showing promising results in clinical trials. The treatment uses a combination of immunotherapy and targeted drug delivery to attack cancer cells while sparing healthy tissue. Early trials show a 70% success rate in patients with previously untreatable forms of cancer. The therapy is expected to be available for widespread use within two years, pending regulatory approval. This development represents a significant step forward in the fight against cancer and offers hope to millions of patients worldwide.'
-  }
-];
 const COLORS = {
   Positive: '#4CAF50',
   Negative: '#F44336',
@@ -219,22 +127,23 @@ const Dashboard = () => {
 
   // Transform news data
   const news = useMemo(() => {
-    if (!newsData) return mockNews;
-    
-    if (newsData.articles) {
-      return newsData.articles.map((article, index) => ({
-        id: index + 1,
-        title: article.title,
-        url: article.url,
-        category: article.category || 'General',
-        sentiment: article.sentiment?.label || 'Neutral',
-        date: article.date || new Date().toISOString().split('T')[0],
-        source: article.source || 'Unknown',
-        views: Math.floor(Math.random() * 50000) + 1000
-      }));
+    // If newsData is not ready or has no articles, return an empty array.
+    if (!newsData || !newsData.articles) {
+      return []; 
     }
     
-    return mockNews;
+    // If we have articles, map them
+    return newsData.articles.map((article, index) => ({
+      id: article.id || index + 1, // Use the real article ID from the DB
+      title: article.title,
+      url: article.url,
+      category: article.category || 'General',
+      sentiment: article.sentiment?.label || 'Neutral',
+      content: article.content || '', // Make sure content exists
+      date: article.date || new Date().toISOString().split('T')[0],
+      source: article.source || 'Unknown',
+      views: Math.floor(Math.random() * 50000) + 1000 // You can keep mock views
+    }));
   }, [newsData]);
 
   const {
@@ -247,7 +156,8 @@ const Dashboard = () => {
     dateRange,
     setDateRange,
     filteredNews,
-    resetFilters
+    resetFilters,
+    isLoading: searchLoading, // Get loading state from our hook
   } = useDashboardFilters(news);
 
   // Transform trends data
@@ -422,19 +332,19 @@ const Dashboard = () => {
       className="max-w-7xl mx-auto"
     >
           <motion.div variants={itemVariant} className="mb-8">
-            <div className="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  <h1 className="text-3xl font-bold text-gray-900">
                     News Analytics Dashboard
                   </h1>
-                  <p className="text-gray-600 dark:text-gray-400 mt-2">
+                  <p className="text-gray-600 mt-2">
                     Real-time sentiment analysis and trending topics monitoring
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Last Updated</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <p className="text-sm text-gray-500">Last Updated</p>
+                  <p className="text-lg font-semibold text-gray-900">
                     {new Date().toLocaleTimeString()}
                   </p>
                 </div>
@@ -444,71 +354,110 @@ const Dashboard = () => {
 
           <motion.div variants={itemVariant} className="mb-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {/* REPLACEMENT START */}
-              <StatCard
-                title="TOTAL ARTICLES"
-                value={loading ? <CircularProgress size={28} /> : stats.total}
-                icon={<NewspaperIcon />}
-                color="#3b82f6"
-              />
-              <StatCard
-                title="POSITIVE SENTIMENT"
-                value={loading ? <CircularProgress size={28} /> : stats.positive}
-                icon={<ArrowTrendingUpIcon />}
-                color="#10b981"
-              />
-              <StatCard
-                title="NEGATIVE SENTIMENT"
-                value={loading ? <CircularProgress size={28} /> : stats.negative}
-                icon={<ArrowTrendingDownIcon />}
-                color="#ef4444"
-              />
-              {/* REPLACEMENT END */}
+              {/* ADD THIS CODE BACK START */}
+              <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                      Total Articles
+                    </p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {(loading || searchLoading) ? <CircularProgress size={28} /> : stats.total}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Processed today
+                    </p>
+                  </div>
+                  <div className="p-3 bg-blue-100 rounded-lg">
+                    <NewspaperIconMUI className="h-8 w-8 text-blue-600" />
+                  </div>
+                </div>
+              </div>
 
-              <div className="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
-                <div className="flex flex-col h-full">
+              <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                      Positive Sentiment
+                    </p>
+                    <p className="text-3xl font-bold text-green-600 mt-2">
+                      {(loading || searchLoading) ? <CircularProgress size={28} /> : stats.positive}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Favorable outlook
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-lg">
+                    <TrendingUpIcon className="h-8 w-8 text-green-600" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                      Negative Sentiment
+                    </p>
+                    <p className="text-3xl font-bold text-red-600 mt-2">
+                      {(loading || searchLoading) ? <CircularProgress size={28} /> : stats.negative}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Areas of concern
+                    </p>
+                  </div>
+                  <div className="p-3 bg-red-100 rounded-lg">
+                    <TrendingDownIcon className="h-8 w-8 text-red-600" />
+                  </div>
+                </div>
+              </div>
+              {/* ADD THIS CODE BACK END */}
+
+              {/* PASTE THIS CODE IN PLACE OF THE PIE CHART */}
+              <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
+                 <div className="flex flex-col h-full">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">
                         Sentiment Distribution
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="text-xs text-gray-500 mt-1">
                         Visual breakdown
                       </p>
                     </div>
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                      <PublicIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <PublicIcon className="h-6 w-6 text-purple-600" />
                     </div>
                   </div>
-                  
+
                   <div className="flex-1 flex flex-col justify-center space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Positive</span>
+                         <span className="text-sm font-medium text-gray-700">Positive</span>
                       </div>
-                      <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                        {loading ? '...' : `${stats.positivePercentage}%`}
+                      <span className="text-sm font-bold text-green-600">
+                        {(loading || searchLoading) ? '...' : `${stats.positivePercentage}%`}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Negative</span>
+                        <span className="text-sm font-medium text-gray-700">Negative</span>
                       </div>
-                      <span className="text-sm font-bold text-red-600 dark:text-red-400">
-                        {loading ? '...' : `${stats.negativePercentage}%`}
+                       <span className="text-sm font-bold text-red-600">
+                        {(loading || searchLoading) ? '...' : `${stats.negativePercentage}%`}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
+                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Neutral</span>
+                        <span className="text-sm font-medium text-gray-700">Neutral</span>
                       </div>
-                      <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
-                        {loading ? '...' : `${stats.neutralPercentage}%`}
+                      <span className="text-sm font-bold text-yellow-600">
+                        {(loading || searchLoading) ? '...' : `${stats.neutralPercentage}%`}
                       </span>
                     </div>
                   </div>
@@ -518,12 +467,12 @@ const Dashboard = () => {
           </motion.div>
 
           <motion.div variants={itemVariant} className="mb-8">
-            <div className="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-gray-900">
                   Filter & Search Controls
                 </h3>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm text-gray-500">
                   Refine your analysis
                 </div>
               </div>
@@ -606,71 +555,67 @@ const Dashboard = () => {
 
           <div className="mb-8">
             <motion.div variants={itemVariant} className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Analytics Dashboard
               </h2>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600">
                 Comprehensive analysis of news sentiment and trending topics
               </p>
             </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
-                <motion.div variants={itemVariant}>
-                  <div className="bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 rounded-xl p-8 h-full">
-                    <div className="flex items-center justify-between mb-8">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                          <TrendingUpIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                            Sentiment Trends Analysis
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            Historical sentiment data and trend analysis over time
-                          </p>
-                        </div>
+              {/* REPLACEMENT START */}
+              <motion.div variants={itemVariant}>
+                <div className="bg-white shadow-lg border border-gray-200 rounded-xl p-8 h-full">
+                  {/* Card Header */}
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-3 bg-purple-100 rounded-lg">
+                        <PublicIcon className="h-6 w-6 text-purple-600" />
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-500 dark:text-gray-400">Last Updated</div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {new Date().toLocaleDateString()}
-                        </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">
+                          Sentiment Distribution
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Overall sentiment analysis of news articles
+                        </p>
                       </div>
-                    </div>
-                    
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                      <Trends data={trendData} loading={loading} />
                     </div>
                   </div>
-                </motion.div>
-              </div>
+                  
+                  {/* Card Content (The Pie Chart) */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <SentimentPieChart data={sentimentData} loading={loading} />
+                  </div>
+                </div>
+              </motion.div>
+              {/* REPLACEMENT END */}
 
               <div>
                 <motion.div variants={itemVariant}>
-                  <div className="bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 rounded-xl p-8 h-full">
+                  <div className="bg-white shadow-lg border border-gray-200 rounded-xl p-8 h-full">
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center space-x-3">
-                        <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-                          <PublicIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                        <div className="p-3 bg-green-100 rounded-lg">
+                          <PublicIcon className="h-6 w-6 text-green-600" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                          <h3 className="text-xl font-bold text-gray-900">
                             Trending Topics
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          <p className="text-sm text-gray-600 mt-1">
                             Most discussed topics in current news cycle
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs text-green-600 dark:text-green-400 font-medium">Live</span>
+                        <span className="text-xs text-green-600 font-medium">Live</span>
                       </div>
                     </div>
                     
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <div className="bg-gray-50 rounded-lg p-4">
                       <TrendingTopics trends={trends} loading={loading} />
                     </div>
                   </div>
@@ -679,114 +624,55 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* REPLACEMENT START */}
           <motion.div variants={itemVariant} className="mt-8">
-            <div className="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-semibold text-gray-900">
                     Latest News Headlines
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Breaking news and latest updates
+                  <p className="text-sm text-gray-600 mt-1">
+                    {(loading || searchLoading) ? 'Loading articles...' : `${filteredNews.length} articles found`}
                   </p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {loading ? 'Loading articles...' : `${filteredNews.length} articles found`}
-                  </div>
-                  {loading && <CircularProgress size={16} color="primary" />}
-                </div>
+                {(loading || searchLoading) && <CircularProgress size={24} color="primary" />}
               </div>
               
-              <div className="space-y-3">
-                {loading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <CircularProgress size={24} color="primary" />
-                    <span className="ml-3 text-gray-600 dark:text-gray-400">Loading headlines...</span>
-                  </div>
-                ) : filteredNews.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    No news articles found matching your filters
-                  </div>
-                ) : (
-                  filteredNews.map((article, index) => (
-                    <div
-                      key={article.id}
-                      className="group border-l-4 border-gray-200 dark:border-gray-600 pl-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 cursor-pointer"
-                      onClick={() => handleArticleClick(article)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-base font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 line-clamp-2">
-                            {article.title}
-                          </h4>
-                          <div className="flex items-center gap-3 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                            <span className="font-medium">{article.source}</span>
-                            <span>•</span>
-                            <span>{new Date(article.date).toLocaleDateString()}</span>
-                            <span>•</span>
-                            <span className="flex items-center gap-1">
-                              <VisibilityIcon sx={{ fontSize: 14 }} />
-                              {article.views?.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                article.sentiment === 'Positive'
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                  : article.sentiment === 'Negative'
-                                  ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                              }`}
-                            >
-                              {article.sentiment}
-                            </span>
-                            <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-full">
-                              {article.category}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="ml-4 flex-shrink-0">
-                          <LaunchIcon 
-                            sx={{ 
-                              fontSize: 16, 
-                              color: 'text.secondary',
-                              opacity: 0.6,
-                              transition: 'opacity 0.2s ease'
-                            }} 
-                            className="group-hover:opacity-100"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
+              {/* This is the new component you are adding */}
+              <div className="max-h-[700px] overflow-y-auto pr-2">
+                <NewsList
+                  news={filteredNews}
+                  loading={loading || searchLoading}
+                  onArticleSelect={handleArticleClick}
+                />
               </div>
+              
             </div>
           </motion.div>
+          {/* REPLACEMENT END */}
 
           {/* Pakistani News Section */}
           {pakistaniNews.length > 0 && (
             <motion.div variants={itemVariant} className="mb-8">
-              <div className="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+              <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                      <GlobeAltIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <GlobeAltIcon className="h-6 w-6 text-green-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                      <h2 className="text-xl font-bold text-gray-900">
                         🇵🇰 Pakistani News
                       </h2>
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-600">
                         Latest news from Pakistani sources
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Articles</p>
-                    <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                    <p className="text-sm text-gray-500">Articles</p>
+                    <p className="text-lg font-semibold text-green-600">
                       {pakistaniNews.length}
                     </p>
                   </div>
@@ -796,16 +682,16 @@ const Dashboard = () => {
                   {pakistaniNews.slice(0, 6).map((article, index) => (
                     <div
                       key={index}
-                      className="group cursor-pointer p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all duration-200 hover:border-green-300 dark:hover:border-green-600"
+                      className="group cursor-pointer p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 hover:border-green-300"
                       onClick={() => handleArticleClick(article)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200 line-clamp-2">
+                          <h4 className="text-sm font-medium text-gray-900 hover:text-green-600 transition-colors duration-200 line-clamp-2">
                             {article.title}
                           </h4>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            <span className="font-medium text-green-600 dark:text-green-400">
+                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                            <span className="font-medium text-green-600">
                               🇵🇰 {article.source}
                             </span>
                             <span>•</span>
@@ -815,15 +701,15 @@ const Dashboard = () => {
                             <span
                               className={`px-2 py-1 text-xs font-medium rounded-full ${
                                 article.sentiment === 'Positive'
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                  ? 'bg-green-100 text-green-800'
                                   : article.sentiment === 'Negative'
-                                  ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-yellow-100 text-yellow-800'
                               }`}
                             >
                               {article.sentiment}
                             </span>
-                            <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
+                            <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                               Pakistan News
                             </span>
                           </div>

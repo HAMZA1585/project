@@ -33,8 +33,8 @@ const TrendingTopics = ({ trends, loading }) => {
     >
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Trending Topics</CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-300">Top keywords identified from recent news articles</CardDescription>
+          <CardTitle className="text-xl font-semibold text-gray-900text-white">Trending Topics</CardTitle>
+          <CardDescription className="text-gray-600text-gray-300">Top keywords identified from recent news articles</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-64 space-y-3 overflow-y-auto">
@@ -47,14 +47,14 @@ const TrendingTopics = ({ trends, loading }) => {
                   <div key={index} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <HashtagIcon className="w-5 h-5 text-blue-500 dark:text-blue-400 mr-3" />
-                        <span className="font-semibold text-gray-900 dark:text-white capitalize text-base">
+                        <HashtagIcon className="w-5 h-5 text-blue-500text-blue-400 mr-3" />
+                        <span className="font-semibold text-gray-900text-white capitalize text-base">
                           {trend.keyword}
                         </span>
                       </div>
                       <Typography 
                         variant="body2" 
-                        className="text-sm font-bold text-blue-600 dark:text-blue-400"
+                        className="text-sm font-bold text-blue-600text-blue-400"
                       >
                         {progressValue.toFixed(1)}%
                       </Typography>
@@ -77,7 +77,7 @@ const TrendingTopics = ({ trends, loading }) => {
                 );
               })
             ) : (
-              <div className="text-center text-gray-600 dark:text-gray-300 pt-16 font-medium">
+              <div className="text-center text-gray-600text-gray-300 pt-16 font-medium">
                 No trend data available.
               </div>
             )}

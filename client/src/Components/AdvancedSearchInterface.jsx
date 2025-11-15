@@ -168,7 +168,7 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
             <form onSubmit={handleSearch} className="space-y-4">
               {/* Keyword Search */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700text-gray-300 mb-2">
                   Search Keywords
                 </label>
                 <div className="relative">
@@ -178,7 +178,7 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
                     placeholder="e.g., crime, storm, technology, politics..."
                     value={searchParams.keyword}
                     onChange={(e) => handleInputChange('keyword', e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparentbg-gray-700text-white"
                   />
                 </div>
               </div>
@@ -187,14 +187,14 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Location Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700text-gray-300 mb-2">
                     <MapPinIcon className="inline h-4 w-4 mr-1" />
                     Location
                   </label>
                   <select
                     value={searchParams.location}
                     onChange={(e) => handleInputChange('location', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparentbg-gray-700text-white"
                   >
                     <option value="">All Locations</option>
                     {locations.map((location) => (
@@ -207,14 +207,14 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
 
                 {/* Category Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700text-gray-300 mb-2">
                     <FunnelIcon className="inline h-4 w-4 mr-1" />
                     Category
                   </label>
                   <select
                     value={searchParams.category}
                     onChange={(e) => handleInputChange('category', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparentbg-gray-700text-white"
                   >
                     <option value="">All Categories</option>
                     {categories.map((category) => (
@@ -227,13 +227,13 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
 
                 {/* Source Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700text-gray-300 mb-2">
                     Source
                   </label>
                   <select
                     value={searchParams.source}
                     onChange={(e) => handleInputChange('source', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparentbg-gray-700text-white"
                   >
                     <option value="">All Sources</option>
                     {sources.map((source) => (
@@ -246,13 +246,13 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
 
                 {/* Sentiment Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700text-gray-300 mb-2">
                     Sentiment
                   </label>
                   <select
                     value={searchParams.sentiment}
                     onChange={(e) => handleInputChange('sentiment', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparentbg-gray-700text-white"
                   >
                     <option value="">All Sentiments</option>
                     <option value="positive">Positive</option>
@@ -280,7 +280,7 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                  className="px-6 py-2 border border-gray-300border-gray-600 text-gray-700text-gray-300 rounded-lg hover:bg-gray-50hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                 >
                   Clear Filters
                 </button>
@@ -311,10 +311,10 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
                 {searchResults.map((article) => (
                   <div
                     key={article.id}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="border border-gray-200border-gray-700 rounded-lg p-4 hover:bg-gray-50hover:bg-gray-800 transition-colors"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <h3 className="text-lg font-semibold text-gray-900text-white">
                         {article.title}
                       </h3>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -326,7 +326,7 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
                       </span>
                     </div>
                     
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-600text-gray-400 mb-2">
                       <span className="flex items-center">
                         <MapPinIcon className="h-4 w-4 mr-1" />
                         {article.location}
@@ -337,7 +337,7 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
                     </div>
                     
                     {article.content && (
-                      <p className="text-gray-700 dark:text-gray-300 text-sm line-clamp-2">
+                      <p className="text-gray-700text-gray-300 text-sm line-clamp-2">
                         {article.content.substring(0, 200)}...
                       </p>
                     )}
@@ -351,7 +351,7 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
                   <button
                     onClick={() => handlePageChange(pagination.current_page - 1)}
                     disabled={!pagination.has_prev}
-                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-1 border border-gray-300border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
@@ -363,7 +363,7 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
                   <button
                     onClick={() => handlePageChange(pagination.current_page + 1)}
                     disabled={!pagination.has_next}
-                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-1 border border-gray-300border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
@@ -381,9 +381,9 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className="shadow-lg border-red-200 bg-red-50 dark:bg-red-900/20">
+          <Card className="shadow-lg border-red-200 bg-red-50bg-red-900/20">
             <CardContent className="text-center py-12">
-              <div className="text-red-600 dark:text-red-400 mb-4">
+              <div className="text-red-600text-red-400 mb-4">
                 <MagnifyingGlassSolidIcon className="h-12 w-12 mx-auto mb-2" />
                 <h3 className="text-lg font-medium mb-2">Search Error</h3>
                 <p className="text-sm">
@@ -411,10 +411,10 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
           <Card className="shadow-lg">
             <CardContent className="text-center py-12">
               <MagnifyingGlassSolidIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              <h3 className="text-lg font-medium text-gray-900text-white mb-2">
                 No articles found
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600text-gray-400">
                 Try adjusting your search criteria or clearing the filters
               </p>
             </CardContent>

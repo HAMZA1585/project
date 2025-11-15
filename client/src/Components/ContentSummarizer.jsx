@@ -177,7 +177,7 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <SummarizeIcon className="text-purple-500" />
-              <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+              <Typography variant="h6" className="font-bold text-gray-900text-white">
                 AI Content Summarizer
               </Typography>
               <Chip 
@@ -208,14 +208,14 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
       />
       
       <CardContent className="space-y-4">
-        <Paper className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+        <Paper className="p-4 bg-gradient-to-r from-purple-50 to-blue-50from-purple-900/20to-blue-900/20">
           <Grid container spacing={3}>
             <Grid item xs={12} md={4}>
               <div className="text-center">
                 <Typography variant="h4" className="font-bold text-purple-600">
                   {stats.withSummaries}
                 </Typography>
-                <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                <Typography variant="body2" className="text-gray-600text-gray-400">
                   Summarized
                 </Typography>
               </div>
@@ -225,7 +225,7 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
                 <Typography variant="h4" className="font-bold text-orange-600">
                   {stats.withoutSummaries}
                 </Typography>
-                <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                <Typography variant="body2" className="text-gray-600text-gray-400">
                   Pending
                 </Typography>
               </div>
@@ -235,7 +235,7 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
                 <Typography variant="h4" className="font-bold text-green-600">
                   {Math.round((stats.withSummaries / stats.total) * 100)}%
                 </Typography>
-                <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                <Typography variant="body2" className="text-gray-600text-gray-400">
                   Complete
                 </Typography>
               </div>
@@ -246,17 +246,17 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <CircularProgress />
-            <Typography variant="body2" className="ml-2 text-gray-600 dark:text-gray-400">
+            <Typography variant="body2" className="ml-2 text-gray-600text-gray-400">
               Generating summaries...
             </Typography>
           </div>
         ) : filteredArticles.length === 0 ? (
           <div className="text-center py-8">
             <ArticleIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <Typography variant="body1" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="body1" className="text-gray-600text-gray-400">
               No articles available for summarization
             </Typography>
-            <Typography variant="body2" className="text-gray-500 dark:text-gray-500">
+            <Typography variant="body2" className="text-gray-500text-gray-500">
               Try adjusting your filter settings
             </Typography>
           </div>
@@ -273,13 +273,13 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
                   key={article.id}
                   variants={itemVariants}
                   layout
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className="border border-gray-200border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <Typography 
                         variant="h6" 
-                        className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2"
+                        className="font-semibold text-gray-900text-white mb-2 line-clamp-2"
                       >
                         {article.title}
                       </Typography>
@@ -311,7 +311,7 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
                       
                       <Typography 
                         variant="body2" 
-                        className="text-gray-600 dark:text-gray-400 line-clamp-2"
+                        className="text-gray-600text-gray-400 line-clamp-2"
                       >
                         {article.content}
                       </Typography>
@@ -355,11 +355,11 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
                   </div>
                   
                   {summaries[article.id] && (
-                    <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <Typography variant="subtitle2" className="font-semibold mb-2 text-gray-900 dark:text-white">
+                    <div className="mt-3 p-3 bg-gray-50bg-gray-800 rounded-lg">
+                      <Typography variant="subtitle2" className="font-semibold mb-2 text-gray-900text-white">
                         AI Summary:
                       </Typography>
-                      <Typography variant="body2" className="text-gray-700 dark:text-gray-300">
+                      <Typography variant="body2" className="text-gray-700text-gray-300">
                         {summaries[article.id]}
                       </Typography>
                     </div>
@@ -444,8 +444,8 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
                   <Typography variant="subtitle2" className="font-semibold mb-2">
                     Generated Summary:
                   </Typography>
-                  <Paper className="p-3 bg-gray-50 dark:bg-gray-800">
-                    <Typography variant="body1" className="text-gray-800 dark:text-gray-200">
+                  <Paper className="p-3 bg-gray-50bg-gray-800">
+                    <Typography variant="body1" className="text-gray-800text-gray-200">
                       {summaries[selectedArticle.id]}
                     </Typography>
                   </Paper>

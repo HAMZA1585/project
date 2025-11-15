@@ -15,6 +15,7 @@ import {
     ChartBarIcon,
     ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
+import { Chip, Box, Typography } from '@mui/material';
 import toast from 'react-hot-toast';
 
 const Archive = () => {
@@ -82,6 +83,49 @@ const Archive = () => {
 
     const articles = articlesData?.articles || [];
     const pagination = articlesData?.pagination || {};
+
+    // --- HELPER FUNCTIONS ---
+    const getLogoUrl = (source) => {
+      const genericLogo = "https://placehold.co/100x100/e2e8f0/334155?text=News";
+
+      if (!source) return genericLogo;
+
+      const sourceMap = {
+        'DAWN': 'https://logo.clearbit.com/dawn.com',
+        'The Nation': 'https://logo.clearbit.com/nation.com.pk',
+        'Daily Express': 'https://logo.clearbit.com/express.com.pk',
+        'Pakistan Observer': 'https://logo.clearbit.com/pakobserver.net',
+        'Urdu Point': 'https://logo.clearbit.com/urdupoint.com',
+        'Pakistan Times': 'https://logo.clearbit.com/pakistantimes.com.pk',
+        'BBC News': 'https://logo.clearbit.com/bbc.com',
+        'CNN': 'https://logo.clearbit.com/cnn.com',
+        'Reuters': 'https://logo.clearbit.com/reuters.com',
+        'The Guardian': 'https://logo.clearbit.com/theguardian.com',
+        'Financial Times': 'https://logo.clearbit.com/ft.com',
+        'Bloomberg': 'https://logo.clearbit.com/bloomberg.com',
+        'TechCrunch': 'https://logo.clearbit.com/techcrunch.com',
+      };
+
+      return sourceMap[source] || genericLogo;
+    };
+
+    const getSentimentIcon = (sentiment) => {
+      switch (sentiment?.toLowerCase()) {
+        case 'positive': return '↗️';
+        case 'negative': return '↘️';
+        default: return '→';
+      }
+    };
+
+    const getSentimentColorForChip = (sentiment) => {
+      switch (sentiment?.toLowerCase()) {
+        case 'positive': return '#4CAF50';
+        case 'negative': return '#F44336';
+        case 'neutral': return '#FFC107';
+        default: return '#FFC107';
+      }
+    };
+    // --- END HELPER FUNCTIONS ---
 
     const handleSearch = () => {
         if (searchType === 'range' && !startDate && !endDate) {
@@ -177,64 +221,28 @@ const Archive = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="p-6">
             <style dangerouslySetInnerHTML={{
                 __html: `
+                    /* --- Light Mode --- */
                     .archive-select {
                         background-color: white !important;
                         color: #111827 !important;
                         border: 1px solid #d1d5db !important;
-                        border-radius: 0.375rem !important;
-                        padding: 0.5rem 0.75rem !important;
-                        font-size: 0.875rem !important;
-                        line-height: 1.25rem !important;
-                        appearance: none !important;
-                        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
-                        background-position: right 0.5rem center !important;
-                        background-repeat: no-repeat !important;
-                        background-size: 1.5em 1.5em !important;
                         padding-right: 2.5rem !important;
                     }
-                    .archive-select option {
-                        background-color: white !important;
-                        color: #111827 !important;
-                        padding: 8px 12px !important;
-                        font-size: 0.875rem !important;
-                    }
-                    .archive-select:focus {
-                        outline: none !important;
-                        ring: 2px !important;
-                        ring-color: #3b82f6 !important;
-                        border-color: #3b82f6 !important;
-                    }
-                    .archive-select:focus option {
-                        background-color: #f3f4f6 !important;
-                    }
                     input[type="radio"] {
-                        appearance: none !important;
-                        width: 16px !important;
-                        height: 16px !important;
-                        border: 2px solid #d1d5db !important;
-                        border-radius: 50% !important;
+                        border-color: #d1d5db !important;
                         background-color: white !important;
-                        cursor: pointer !important;
-                        position: relative !important;
                     }
                     input[type="radio"]:checked {
                         border-color: #2563eb !important;
                         background-color: #2563eb !important;
                     }
                     input[type="radio"]:checked::after {
-                        content: '' !important;
-                        position: absolute !important;
-                        top: 50% !important;
-                        left: 50% !important;
-                        transform: translate(-50%, -50%) !important;
-                        width: 6px !important;
-                        height: 6px !important;
-                        border-radius: 50% !important;
                         background-color: white !important;
                     }
+
                 `
             }} />
             <div className="max-w-7xl mx-auto">
@@ -726,68 +734,90 @@ const Archive = () => {
                     ) : (
                         <div className="divide-y divide-gray-200">
                             {articles.map((article) => (
-                                <div key={article.id} className="p-6 hover:bg-gray-50 transition-colors">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h4 className="text-lg font-semibold text-gray-900 line-clamp-2">
-                                            {article.title}
-                                        </h4>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSentimentColor(article.sentiment?.label)}`}>
-                                            {article.sentiment?.label || 'Unknown'}
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="flex items-center text-sm text-gray-500 mb-3">
-                                        <ClockIcon className="mr-1 h-4 w-4" />
-                                        {formatDate(article.date)}
-                                        <span className="mx-2">•</span>
-                                        <span className={`font-medium ${
-                                            article.source.includes('DAWN') || article.source.includes('Pakistan') || article.source.includes('Urdu')
-                                                ? 'text-green-600'
-                                                : 'text-gray-700'
-                                        }`}>
-                                            {article.source.includes('DAWN') || article.source.includes('Pakistan') || article.source.includes('Urdu') ? '🇵🇰 ' : ''}{article.source}
-                                        </span>
-                                        {article.category && (
-                                            <>
-                                                <span className="mx-2">•</span>
-                                                <span className={`px-2 py-1 rounded-full text-xs ${
-                                                    article.category === 'Pakistan News'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-gray-100 text-gray-600'
-                                                }`}>
-                                                    {article.category}
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-                                    
-                                    {article.content && (
-                                        <p className="text-gray-700 line-clamp-3 mb-3">
-                                            {article.content}
-                                        </p>
-                                    )}
-                                    
-                                    <div className="flex justify-between items-center">
-                                        <button
-                                            onClick={() => {
-                                                if (article.url && !article.url.includes('example.com')) {
-                                                    window.open(article.url, '_blank', 'noopener,noreferrer');
-                                                } else {
-                                                    // Show article content in a modal or alert for demo articles
-                                                    alert(`Demo Article: ${article.title}\n\nThis is a sample article for demonstration purposes. In a real application, this would link to the actual news source.`);
-                                                }
-                                            }}
-                                            className="text-blue-600 hover:text-blue-800 text-sm font-medium cursor-pointer"
-                                        >
-                                            {article.url && !article.url.includes('example.com') ? 'Read full article →' : 'View article details →'}
-                                        </button>
-                                        {article.sentiment?.score && (
-                                            <span className="text-xs text-gray-500">
-                                                Score: {article.sentiment.score.toFixed(2)}
-                                            </span>
-                                        )}
+                                
+                                // --- REPLACEMENT START ---
+                                <div
+                                    key={article.id}
+                                    className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 my-4"
+                                >
+                                    <div className="flex p-4">
+                                        {/* Logo Thumbnail */}
+                                        <div className="flex-shrink-0 mr-4">
+                                            <img
+                                                src={getLogoUrl(article.source)}
+                                                alt={`${article.source} logo`}
+                                                className="w-24 h-24 object-contain rounded-lg border border-gray-200 bg-white"
+                                            />
+                                        </div>
+                                        
+                                        {/* Article Content */}
+                                        <div className="flex-1 min-w-0">
+                                            {/* Title */}
+                                            <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                                                {article.title}
+                                            </h3>
+                                            
+                                            {/* Metadata (using Archive's formatDate) */}
+                                            <div className="flex items-center gap-2 mb-2 text-sm text-gray-500">
+                                                <span className="font-medium">{article.source}</span>
+                                                <span>•</span>
+                                                <span>{formatDate(article.date)}</span>
+                                            </div>
+                                            
+                                            {/* Category and Sentiment */}
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <Chip 
+                                                    label={article.category} 
+                                                    size="small" 
+                                                    variant="outlined"
+                                                    sx={{ fontSize: '0.75rem' }}
+                                                />
+                                                <Chip
+                                                    label={`${getSentimentIcon(article.sentiment?.label)} ${article.sentiment?.label}`}
+                                                    size="small"
+                                                    sx={{
+                                                        backgroundColor: getSentimentColorForChip(article.sentiment?.label),
+                                                        color: 'white',
+                                                        fontWeight: 500,
+                                                        fontSize: '0.75rem'
+                                                    }}
+                                                />
+                                            </div>
+                                            
+                                            {/* Content Preview */}
+                                            {article.content && (
+                                                <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                                                    {article.content.length > 120 
+                                                        ? `${article.content.substring(0, 120)}...` 
+                                                        : article.content
+                                                    }
+                                                </p>
+                                            )}
+                                            
+                                            {/* Read More Button (using Archive's existing logic) */}
+                                            <div className="flex items-center justify-between mt-2">
+                                                <button
+                                                    onClick={() => {
+                                                        if (article.url && !article.url.includes('example.com')) {
+                                                            window.open(article.url, '_blank', 'noopener,noreferrer');
+                                                        } else {
+                                                            alert(`Demo Article: ${article.title}\n\nThis is a sample article for demonstration purposes.`);
+                                                        }
+                                                    }}
+                                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium cursor-pointer"
+                                                >
+                                                    Read full article →
+                                                </button>
+                                                {article.sentiment?.score && (
+                                                    <span className="text-xs text-gray-500">
+                                                        Score: {article.sentiment.score.toFixed(2)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+                                // --- REPLACEMENT END ---
                             ))}
                         </div>
                     )}

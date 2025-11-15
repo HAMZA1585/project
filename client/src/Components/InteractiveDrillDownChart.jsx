@@ -19,7 +19,6 @@ import {
   MenuItem
 } from '@mui/material';
 import {
-  ZoomIn as ZoomInIcon,
   ZoomOut as ZoomOutIcon,
   Refresh as RefreshIcon,
   ArrowBack as ArrowBackIcon,
@@ -48,8 +47,7 @@ const InteractiveDrillDownChart = ({
   // Chart types
   const chartTypes = [
     { value: 'bar', label: 'Bar Chart', icon: <BarChartIcon /> },
-    { value: 'pie', label: 'Pie Chart', icon: <TrendingUpIcon /> },
-    { value: 'treemap', label: 'Treemap', icon: <ZoomInIcon /> }
+    { value: 'pie', label: 'Pie Chart', icon: <TrendingUpIcon /> }
   ];
 
   // Process data for drill-down
@@ -152,8 +150,6 @@ const InteractiveDrillDownChart = ({
       createBarChart(g, currentData, innerWidth, innerHeight);
     } else if (chartType === 'pie') {
       createPieChart(g, currentData, innerWidth, innerHeight);
-    } else if (chartType === 'treemap') {
-      createTreemap(g, currentData, innerWidth, innerHeight);
     }
 
   }, [currentData, dimensions, chartType]);
@@ -280,55 +276,6 @@ const InteractiveDrillDownChart = ({
       .text(d => d.data.name);
   };
 
-  // Create treemap
-  const createTreemap = (g, data, width, height) => {
-    const treemap = d3.treemap()
-      .size([width, height])
-      .padding(2);
-
-    const root = d3.hierarchy({ children: data })
-      .sum(d => d.value);
-
-    treemap(root);
-
-    const cells = g.selectAll(".cell")
-      .data(root.leaves())
-      .enter()
-      .append("g")
-      .attr("class", "cell")
-      .attr("transform", d => `translate(${d.x0},${d.y0})`);
-
-    cells.append("rect")
-      .attr("width", d => d.x1 - d.x0)
-      .attr("height", d => d.y1 - d.y0)
-      .attr("fill", d => d3.interpolateBlues(d.data.value / d3.max(data, d => d.value)))
-      .attr("stroke", "white")
-      .attr("stroke-width", 1)
-      .style("cursor", "pointer")
-      .on("mouseover", function(event, d) {
-        setHoveredItem(d.data);
-        d3.select(this)
-          .attr("stroke", "#374151")
-          .attr("stroke-width", 2);
-      })
-      .on("mouseout", function() {
-        setHoveredItem(null);
-        d3.select(this)
-          .attr("stroke", "white")
-          .attr("stroke-width", 1);
-      })
-      .on("click", (event, d) => handleDrillDown(d.data));
-
-    cells.append("text")
-      .attr("x", d => (d.x1 - d.x0) / 2)
-      .attr("y", d => (d.y1 - d.y0) / 2)
-      .attr("text-anchor", "middle")
-      .attr("dominant-baseline", "middle")
-      .style("font-size", "10px")
-      .style("fill", "white")
-      .text(d => d.data.name);
-  };
-
   // Handle drill-down
   const handleDrillDown = (item) => {
     if (drillLevel < 2) {
@@ -381,18 +328,55 @@ const InteractiveDrillDownChart = ({
       transition={{ duration: 0.6 }}
     >
       <Paper className="p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        
+        {/* --- NEW COMBINED HEADER --- */}
+        <div className="flex items-start justify-between mb-6">
+          
+          {/* Left Side: Title & Subtitle */}
           <div>
-            <Typography variant="h6" className="font-semibold text-gray-900 dark:text-white">
+            <Typography variant="h6" className="font-semibold text-gray-900text-white">
               {title}
             </Typography>
-            <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+            <Typography variant="body2" className="text-gray-600text-gray-400">
               Click on any element to drill down for detailed analysis
             </Typography>
           </div>
           
-          <div className="flex items-center space-x-2">
+          {/* Right Side: Navigation & Chart Type */}
+          <div className="flex items-center space-x-4">
+            
+            {/* Navigation Buttons */}
+            <div className="flex items-center space-x-2 border-r pr-4 border-gray-200border-gray-700">
+              <Tooltip title="Go Back">
+                <span>
+                  <IconButton 
+                    onClick={handleDrillUp} 
+                    disabled={drillLevel === 0}
+                    size="small"
+                  >
+                    <ArrowBackIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Go to Top Level">
+                <span>
+                  <IconButton 
+                    onClick={handleHome} 
+                    disabled={drillLevel === 0}
+                    size="small"
+                  >
+                    <HomeIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Chip 
+                label={`Level ${drillLevel + 1}`} 
+                color="primary" 
+                size="small" 
+              />
+            </div>
+
+            {/* Chart Type Select */}
             <FormControl size="small" className="min-w-32">
               <InputLabel>Chart Type</InputLabel>
               <Select
@@ -412,8 +396,10 @@ const InteractiveDrillDownChart = ({
             </FormControl>
           </div>
         </div>
+        {/* --- END OF NEW HEADER --- */}
 
-        {/* Breadcrumbs */}
+
+        {/* Breadcrumbs (Now separate and clean) */}
         <div className="mb-6">
           <Breadcrumbs>
             {getBreadcrumbPath().map((segment, index) => (
@@ -436,44 +422,7 @@ const InteractiveDrillDownChart = ({
           </Breadcrumbs>
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-2">
-            <Tooltip title="Go Back">
-              <span>
-                <IconButton 
-                  onClick={handleDrillUp} 
-                  disabled={drillLevel === 0}
-                  size="small"
-                >
-                  <ArrowBackIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title="Go to Top Level">
-              <span>
-                <IconButton 
-                  onClick={handleHome} 
-                  disabled={drillLevel === 0}
-                  size="small"
-                >
-                  <HomeIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Chip 
-              label={`Level ${drillLevel + 1}`} 
-              color="primary" 
-              size="small" 
-            />
-          </div>
-          
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {currentData.length} items • Total: {currentData.reduce((sum, d) => sum + d.value, 0)} articles
-          </div>
-        </div>
-
-        {/* Chart */}
+        {/* Chart (This part is unchanged) */}
         <div ref={containerRef} className="w-full">
           <svg ref={svgRef} className="w-full" />
         </div>
@@ -485,19 +434,19 @@ const InteractiveDrillDownChart = ({
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="absolute bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 pointer-events-none z-10"
+              className="absolute bg-whitebg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200border-gray-700 pointer-events-none z-10"
               style={{
                 left: hoveredItem.x || 0,
                 top: hoveredItem.y || 0
               }}
             >
-              <Typography variant="body2" className="font-semibold text-gray-900 dark:text-white">
+              <Typography variant="body2" className="font-semibold text-gray-900text-white">
                 {hoveredItem.name}
               </Typography>
-              <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+              <Typography variant="body2" className="text-gray-600text-gray-400">
                 Articles: {hoveredItem.value}
               </Typography>
-              <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+              <Typography variant="body2" className="text-gray-600text-gray-400">
                 Click to drill down
               </Typography>
             </motion.div>
@@ -508,17 +457,17 @@ const InteractiveDrillDownChart = ({
         {selectedData && (
           <Card className="mt-6">
             <CardContent>
-              <Typography variant="h6" className="font-semibold text-gray-900 dark:text-white mb-4">
+              <Typography variant="h6" className="font-semibold text-gray-900text-white mb-4">
                 Selected: {selectedData.name}
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     Total Articles: {selectedData.value}
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                  <Typography variant="body2" className="text-gray-600text-gray-400">
                     Drill Path: {selectedData.path.join(' → ')}
                   </Typography>
                 </Grid>

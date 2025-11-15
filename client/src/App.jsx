@@ -37,31 +37,16 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  const [darkMode, setDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      try {
-        return JSON.parse(savedTheme);
-      } catch (e) {
-        // If parsing fails, check if it's a string value
-        return savedTheme === 'true' || savedTheme === 'dark';
-      }
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
+  const [darkMode, setDarkMode] = useState(false);
 
+  // Force light mode - always remove dark class
   useEffect(() => {
-    localStorage.setItem('theme', JSON.stringify(darkMode));
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
+    document.documentElement.classList.remove('dark');
+  }, []); // Only run once on load
 
   const theme = createTheme({
     palette: {
-      mode: darkMode ? 'dark' : 'light',
+      mode: 'light',
       primary: {
         main: '#4f46e5', // Indigo 600
       },
@@ -69,8 +54,8 @@ function App() {
         main: '#10b981', // Emerald 500
       },
       background: {
-        default: darkMode ? '#1f2937' : '#f9fafb', // Gray 800 / Gray 50
-        paper: darkMode ? '#374151' : '#ffffff', // Gray 700 / White
+        default: '#f9fafb', // Gray 50
+        paper: '#ffffff', // White
       },
     },
     typography: {
@@ -81,7 +66,7 @@ function App() {
         styleOverrides: {
           root: {
             borderRadius: '12px',
-            boxShadow: darkMode ? '0 4px 6px rgba(0, 0, 0, 0.3)' : '0 4px 6px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
           },
         },
       },
@@ -154,11 +139,11 @@ function App() {
                     
                     {/* Protected routes */}
                     <Route path="/" element={
-                      <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+                      <div className="flex h-screen bg-gray-100">
                         <Sidebar />
                         <div className="flex-1 flex flex-col overflow-hidden">
-                          <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-                          <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4">
+                          <Header darkMode={darkMode} />
+                          <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4">
                             <Navigate to="/dashboard" replace />
                           </main>
                         </div>
@@ -167,11 +152,11 @@ function App() {
                     
                     <Route path="/dashboard" element={
                       <ProtectedRoute>
-                        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+                        <div className="flex h-screen bg-gray-100">
                           <Sidebar />
                           <div className="flex-1 flex flex-col overflow-hidden">
                             <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4">
+                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4">
                               <Dashboard />
                             </main>
                           </div>
@@ -181,11 +166,11 @@ function App() {
                     
                     <Route path="/visualization" element={
                       <ProtectedRoute>
-                        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+                        <div className="flex h-screen bg-gray-100">
                           <Sidebar />
                           <div className="flex-1 flex flex-col overflow-hidden">
                             <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4">
+                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4">
                               <DataVisualization />
                             </main>
                           </div>
@@ -195,11 +180,11 @@ function App() {
                     
                     <Route path="/curation" element={
                       <ProtectedRoute>
-                        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+                        <div className="flex h-screen bg-gray-100">
                           <Sidebar />
                           <div className="flex-1 flex flex-col overflow-hidden">
                             <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4">
+                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4">
                               <ContentCuration />
                             </main>
                           </div>
@@ -209,11 +194,11 @@ function App() {
                     
                     <Route path="/search" element={
                       <ProtectedRoute>
-                        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+                        <div className="flex h-screen bg-gray-100">
                           <Sidebar />
                           <div className="flex-1 flex flex-col overflow-hidden">
                             <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4">
+                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4">
                               <AdvancedSearch />
                             </main>
                           </div>
@@ -223,11 +208,11 @@ function App() {
                     
                     <Route path="/report" element={
                       <ProtectedRoute>
-                        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+                        <div className="flex h-screen bg-gray-100">
                           <Sidebar />
                           <div className="flex-1 flex flex-col overflow-hidden">
                             <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4">
+                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4">
                               <Report />
                             </main>
                           </div>
@@ -237,11 +222,11 @@ function App() {
                     
                     <Route path="/archive" element={
                       <ProtectedRoute>
-                        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+                        <div className="flex h-screen bg-gray-100">
                           <Sidebar />
                           <div className="flex-1 flex flex-col overflow-hidden">
                             <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4">
+                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4">
                               <Archive />
                             </main>
                           </div>
@@ -251,11 +236,11 @@ function App() {
                     
                     <Route path="/admin" element={
                       <ProtectedRoute role="admin">
-                        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+                        <div className="flex h-screen bg-gray-100">
                           <Sidebar />
                           <div className="flex-1 flex flex-col overflow-hidden">
                             <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-800 p-4">
+                            <main ref={mainRef} className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4">
                               <Admin />
                             </main>
                           </div>
@@ -298,7 +283,7 @@ function App() {
                 pauseOnFocusLoss
                 draggable
                 pauseOnHover
-                theme={darkMode ? "dark" : "light"}
+                theme="light"
                 enableMultiContainer
                 containerId="notification-container"
               />

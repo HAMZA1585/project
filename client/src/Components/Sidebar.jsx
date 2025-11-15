@@ -63,20 +63,20 @@ const Sidebar = () => {
         className={`fixed md:relative z-40 h-screen transition-all duration-300 ease-in-out flex flex-col justify-between
         ${collapsed ? "w-20" : "w-72"} 
         ${mobileOpen ? "left-0" : "-left-full md:left-0"}
-        bg-white border-r border-gray-200 shadow-lg`}
+        bg-gray-900 border-r border-gray-200 shadow-lg`}
       >
         {/* Top section */}
         <div>
           {/* Logo/Header */}
           <div className={`flex items-center justify-between h-20 ${collapsed ? "px-3" : "px-6"}`}>
             {!collapsed ? (
-              <span className="text-gray-900 font-bold text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">NewsDesk</span>
+              <span className="text-white font-bold text-2xl">NewsDesk</span>
             ) : (
-              <span className="text-gray-900 font-bold text-xl mx-auto bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">N</span>
+              <span className="text-white font-bold text-xl mx-auto">N</span>
             )}
             <button
               onClick={toggleSidebar}
-              className="hidden md:block text-gray-500 hover:text-gray-900 p-2 rounded-xl hover:bg-gray-100 transition-all duration-200 hover:scale-105 hover:translate-x-1"
+              className="hidden md:block text-gray-400 hover:text-white p-2 rounded-xl hover:bg-gray-700 transition-all duration-200 hover:scale-105 hover:translate-x-1"
             >
               {collapsed ? (
                 <ChevronDoubleRightIcon className="w-5 h-5" />
@@ -98,8 +98,8 @@ const Sidebar = () => {
                   } rounded-xl transition-all duration-200 group hover:translate-x-1
                   ${
                     isActive
-                      ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 shadow-sm border border-blue-200 border-l-4 border-l-indigo-600"
-                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm"
+                      ? "bg-gray-700 text-white shadow-sm"
+                      : "text-gray-400 hover:bg-gray-700 hover:text-white hover:shadow-sm"
                   }`
                 }
               >
@@ -115,7 +115,7 @@ const Sidebar = () => {
           <button
             className={`flex items-center w-full justify-center ${
               collapsed ? "py-3" : "py-3 px-4"
-            } text-lg text-gray-700 hover:text-white bg-gray-100 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105 hover:translate-x-1 group`}
+            } text-lg text-gray-400 hover:text-white bg-gray-900 hover:bg-red-600 font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105 hover:translate-x-1 group`}
             onClick={handleLogout}
           >
             <ArrowLeftOnRectangleIcon className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
