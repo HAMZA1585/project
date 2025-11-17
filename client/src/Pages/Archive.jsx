@@ -5,7 +5,8 @@ import {
     fetchArchiveByMonth, 
     fetchArchiveByPeriod, 
     fetchArchiveStats, 
-    fetchAvailableDates 
+    fetchAvailableDates,
+    fetchArchiveLiveWindow 
 } from '../Services/api';
 import { 
     CalendarIcon, 
@@ -32,6 +33,7 @@ const Archive = () => {
     const [location, setLocation] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [perPage, setPerPage] = useState(50);
+    const [liveArticles, setLiveArticles] = useState([]);
 
     // Query for available dates
     const { data: availableDates } = useQuery({
@@ -73,16 +75,56 @@ const Archive = () => {
         staleTime: 2 * 60 * 1000, // 2 minutes
     });
 
-    // Query for stats when using range search
+    // Stats for selected window
+    const computeStatsWindow = () => {
+        if (searchType === 'period') {
+            const now = new Date();
+            let start;
+            if (selectedPeriod === 'last_week') start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            else if (selectedPeriod === 'last_month') start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            else if (selectedPeriod === 'last_quarter') start = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            else start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+            return { fromIso: start.toISOString(), toIso: now.toISOString() };
+        }
+        if (searchType === 'month') {
+            const y = selectedYear;
+            const m = selectedMonth;
+            const start = new Date(y, m - 1, 1);
+            const end = new Date(m === 12 ? y + 1 : y, m === 12 ? 0 : m, 1);
+            const endMinus = new Date(end.getTime() - 1000);
+            return { fromIso: start.toISOString(), toIso: endMinus.toISOString() };
+        }
+        if (searchType === 'range') {
+            if (!startDate && !endDate) return null;
+            const fromIso = startDate ? new Date(startDate).toISOString() : undefined;
+            const toIso = endDate ? new Date(endDate).toISOString() : new Date().toISOString();
+            return { fromIso, toIso };
+        }
+        return null;
+    };
+    const statsWindow = computeStatsWindow();
     const { data: stats } = useQuery({
-        queryKey: ['archiveStats', startDate, endDate],
-        queryFn: () => fetchArchiveStats(startDate, endDate),
-        enabled: searchType === 'range' && (!!startDate || !!endDate),
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        queryKey: ['archiveStats', searchType, selectedPeriod, selectedYear, selectedMonth, startDate, endDate],
+        queryFn: () => {
+            if (!statsWindow) return Promise.resolve(null);
+            return fetchArchiveStats(statsWindow.fromIso, statsWindow.toIso);
+        },
+        enabled: !!statsWindow,
+        staleTime: 5 * 60 * 1000,
     });
 
     const articles = articlesData?.articles || [];
     const pagination = articlesData?.pagination || {};
+    const mergedArticles = (() => {
+        const seen = new Set(articles.map(a => a.url || a.id));
+        const taggedLive = (liveArticles || []).map(a => ({ ...a, __live: true }));
+        const extras = taggedLive.filter(a => {
+            const key = a.url;
+            if (!key) return true;
+            return !seen.has(key);
+        });
+        return [...articles, ...extras];
+    })();
 
     // --- HELPER FUNCTIONS ---
     const getLogoUrl = (source) => {
@@ -147,6 +189,26 @@ const Archive = () => {
         setCurrentPage(1);
         // React Query will automatically refetch when dependencies change
     };
+
+    React.useEffect(() => {
+        const doLiveFetch = async () => {
+            setLiveArticles([]);
+            try {
+                if (searchType === 'period') {
+                    const res = await fetchArchiveLiveWindow({ type: 'period', period: selectedPeriod });
+                    setLiveArticles(res?.live || []);
+                } else if (searchType === 'month') {
+                    const res = await fetchArchiveLiveWindow({ type: 'month', year: selectedYear, month: selectedMonth });
+                    setLiveArticles(res?.live || []);
+                } else if (searchType === 'range' && (startDate || endDate)) {
+                    const res = await fetchArchiveLiveWindow({ type: 'range', start_date: startDate || undefined, end_date: endDate || undefined });
+                    setLiveArticles(res?.live || []);
+                }
+            } catch (e) {
+            }
+        };
+        doLiveFetch();
+    }, [searchType, selectedPeriod, selectedYear, selectedMonth, startDate, endDate]);
 
     // Handle React Query errors
     React.useEffect(() => {
@@ -725,7 +787,7 @@ const Archive = () => {
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
                             <p className="text-gray-600">Loading articles...</p>
                         </div>
-                    ) : articles.length === 0 ? (
+                    ) : mergedArticles.length === 0 ? (
                         <div className="p-8 text-center text-gray-500">
                             <ArchiveBoxIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                             <p>No articles found for the selected criteria.</p>
@@ -733,11 +795,11 @@ const Archive = () => {
                         </div>
                     ) : (
                         <div className="divide-y divide-gray-200">
-                            {articles.map((article) => (
+                            {mergedArticles.map((article, idx) => (
                                 
                                 // --- REPLACEMENT START ---
                                 <div
-                                    key={article.id}
+                                    key={article.url || article.id || idx}
                                     className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 my-4"
                                 >
                                     <div className="flex p-4">
@@ -752,10 +814,12 @@ const Archive = () => {
                                         
                                         {/* Article Content */}
                                         <div className="flex-1 min-w-0">
-                                            {/* Title */}
                                             <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
                                                 {article.title}
                                             </h3>
+                                            {article.__live && (
+                                                <span className="inline-block text-xs font-semibold text-blue-700 bg-blue-100 rounded px-2 py-1">New</span>
+                                            )}
                                             
                                             {/* Metadata (using Archive's formatDate) */}
                                             <div className="flex items-center gap-2 mb-2 text-sm text-gray-500">

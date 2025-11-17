@@ -76,10 +76,10 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
   const clearFilters = () => {
     setSearchParams({
       keyword: '',
-      location: '',
-      category: '',
-      source: '',
-      sentiment: ''
+      location: [],
+      category: [],
+      source: [],
+      sentiment: []
     });
     setCurrentPage(1);
     setIsSearchEnabled(false);
@@ -128,6 +128,15 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
     }
   };
 
+  const handleFilterDawn = () => {
+    setSearchParams(prev => ({
+      ...prev,
+      source: ['DAWN']
+    }));
+    setCurrentPage(1);
+    setIsSearchEnabled(true);
+  };
+
   return (
     <div className="space-y-6">
       {/* Search Form */}
@@ -157,6 +166,13 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
                   className="px-3 py-1.5 text-sm rounded bg-emerald-600 text-white hover:bg-emerald-700"
                 >
                   Create Alert
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFilterDawn}
+                  className="px-3 py-1.5 text-sm rounded bg-gray-600 text-white hover:bg-gray-700"
+                >
+                  Show DAWN Only
                 </button>
               </span>
             </CardTitle>
@@ -315,7 +331,9 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
                   >
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="text-lg font-semibold text-gray-900text-white">
-                        {article.title}
+                        <a href={article.url} target="_blank" rel="noopener noreferrer" className="underline">
+                          {article.title}
+                        </a>
                       </h3>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         article.sentiment.label === 'positive' ? 'bg-green-100 text-green-800' :
@@ -341,6 +359,9 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
                         {article.content.substring(0, 200)}...
                       </p>
                     )}
+                    <div className="mt-2">
+                      <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 text-sm">View Full Article</a>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -369,6 +390,24 @@ const AdvancedSearchInterface = ({ onSearchResults }) => {
                   </button>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && data && searchResults.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="shadow-lg">
+            <CardContent className="text-center py-12">
+              <div className="text-gray-600">
+                <h3 className="text-lg font-medium mb-2">No results found</h3>
+                <p className="text-sm">Try adjusting your search filters or keywords.</p>
+              </div>
             </CardContent>
           </Card>
         </motion.div>

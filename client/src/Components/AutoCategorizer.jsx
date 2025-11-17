@@ -62,6 +62,12 @@ const AutoCategorizer = ({ articles = [], categories = {}, onCategorize }) => {
     categories: []
   });
   const [categoryStats, setCategoryStats] = useState({});
+  const [curationSettings, setCurationSettings] = useState({
+    autoCategorize: false,
+    categoryConfidence: 0.7
+  });
+  const updateSettings = (updates) => setCurationSettings(prev => ({ ...prev, ...updates }));
+  const loading = Boolean(onCategorize?.isLoading);
 
   const predefinedCategories = [
     'Technology', 'Business', 'Politics', 'Health', 'Sports', 'Entertainment',
@@ -491,7 +497,7 @@ const AutoCategorizer = ({ articles = [], categories = {}, onCategorize }) => {
               control={
                 <Switch
                   checked={curationSettings.autoCategorize}
-                  onChange={(e) => dispatch(updateSettings({ autoCategorize: e.target.checked }))}
+                  onChange={(e) => updateSettings({ autoCategorize: e.target.checked })}
                 />
               }
               label="Auto-categorize new articles"
@@ -503,7 +509,7 @@ const AutoCategorizer = ({ articles = [], categories = {}, onCategorize }) => {
               </Typography>
               <Slider
                 value={curationSettings.categoryConfidence}
-                onChange={(e, value) => dispatch(updateSettings({ categoryConfidence: value }))}
+                onChange={(e, value) => updateSettings({ categoryConfidence: value })}
                 min={0.5}
                 max={1}
                 step={0.1}

@@ -59,6 +59,12 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
     minLength: 100,
     categories: []
   });
+  const [curationSettings, setCurationSettings] = useState({
+    autoSummarize: false,
+    summaryLength: 'medium'
+  });
+  const updateSettings = (updates) => setCurationSettings(prev => ({ ...prev, ...updates }));
+  const loading = Boolean(onSummarize?.isLoading);
 
   useEffect(() => {
     if (!Array.isArray(articles)) {
@@ -233,7 +239,7 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
             <Grid item xs={12} md={4}>
               <div className="text-center">
                 <Typography variant="h4" className="font-bold text-green-600">
-                  {Math.round((stats.withSummaries / stats.total) * 100)}%
+                  {stats.total ? Math.round((stats.withSummaries / stats.total) * 100) : 0}%
                 </Typography>
                 <Typography variant="body2" className="text-gray-600text-gray-400">
                   Complete
@@ -444,11 +450,34 @@ const ContentSummarizer = ({ articles = [], summaries = {}, onSummarize }) => {
                   <Typography variant="subtitle2" className="font-semibold mb-2">
                     Generated Summary:
                   </Typography>
-                  <Paper className="p-3 bg-gray-50bg-gray-800">
-                    <Typography variant="body1" className="text-gray-800text-gray-200">
+                  <Paper 
+                    className="p-3 bg-gray-50bg-gray-800"
+                    style={{ maxHeight: '60vh', overflowY: 'auto' }}
+                  >
+                    <Typography 
+                      variant="body1" 
+                      className="text-gray-800text-gray-200"
+                      style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                    >
                       {summaries[selectedArticle.id]}
                     </Typography>
                   </Paper>
+                  <div className="mt-2 flex gap-2">
+                    <Button 
+                      variant="outlined" 
+                      startIcon={<ContentCopyIcon />} 
+                      onClick={() => handleCopySummary(summaries[selectedArticle.id])}
+                    >
+                      Copy
+                    </Button>
+                    <Button 
+                      variant="outlined" 
+                      startIcon={<DownloadIcon />} 
+                      onClick={() => handleDownloadSummary(selectedArticle, summaries[selectedArticle.id])}
+                    >
+                      Download
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

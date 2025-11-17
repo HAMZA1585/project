@@ -63,11 +63,21 @@ def analyze_sentiment(text: str):
     
     try:
         result = sentiment_model(text)[0]
-        label = str(result.get('label', '')).lower()
+        raw_label = str(result.get('label', ''))
         score = float(result.get('score', 0.0))
+
+        label_map = {
+            'LABEL_0': 'negative',
+            'LABEL_1': 'neutral',
+            'LABEL_2': 'positive',
+            'NEGATIVE': 'negative',
+            'NEUTRAL': 'neutral',
+            'POSITIVE': 'positive'
+        }
+        normalized = label_map.get(raw_label, raw_label.lower())
         
-        logger.debug(f"Sentiment analysis completed: {label} (score: {score})")
-        return {"score": round(score, 3), "label": label}
+        logger.debug(f"Sentiment analysis completed: {normalized} (score: {score})")
+        return {"score": round(score, 3), "label": normalized}
         
     except Exception as e:
         logger.critical(f"❌ CRITICAL ERROR: Sentiment analysis failed: {str(e)}")

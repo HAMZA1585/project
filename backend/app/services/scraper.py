@@ -5,6 +5,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from urllib.parse import urlparse, urlunparse
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,34 @@ CURRENTS_API_KEY = os.getenv('CURRENTS_API_KEY')
 GUARDIAN_API_KEY = os.getenv('GUARDIAN_API_KEY')
 
 DEFAULT_TIMEOUT_SECONDS = 15
+
+# Cache for NewsAPI sources → category mapping
+NEWSAPI_SOURCE_CATEGORY_MAP = {}
+
+def _load_newsapi_source_category_map():
+    global NEWSAPI_SOURCE_CATEGORY_MAP
+    if not NEWS_API_KEY:
+        return
+    if NEWSAPI_SOURCE_CATEGORY_MAP:
+        return
+    try:
+        url = "https://newsapi.org/v2/top-headlines/sources"
+        params = {"language": "en"}
+        headers = {"X-Api-Key": NEWS_API_KEY}
+        data = http_get(url, params=params, headers=headers)
+        mapping = {}
+        for src in data.get("sources", []):
+            cat = src.get("category")
+            src_id = src.get("id")
+            name = src.get("name")
+            if cat:
+                if src_id:
+                    mapping[src_id.lower()] = cat
+                if name:
+                    mapping[name.lower()] = cat
+        NEWSAPI_SOURCE_CATEGORY_MAP = mapping
+    except Exception as e:
+        logger.warning(f"Failed to load NewsAPI source categories: {str(e)}")
 
 def http_get(url, *, headers=None, params=None, timeout=DEFAULT_TIMEOUT_SECONDS):
     try:
@@ -54,35 +83,99 @@ def fetch_article_content(article_info, headers, content_selectors, source_name)
         article_url = article_info['url']
         title = article_info['title']
         
+        # Early dedupe: skip if URL already exists in DB
+        try:
+            from ..models import Article
+            from .. import db
+            canon_pre = canonicalize_url(article_url)
+            exists = Article.query.filter_by(url=canon_pre).first()
+            if exists:
+                return None
+        except Exception:
+            pass
+
         article_page = requests.get(article_url, headers=HEADERS, timeout=DEFAULT_TIMEOUT_SECONDS)
         article_page.raise_for_status()
         article_soup = BeautifulSoup(article_page.content, 'html.parser')
         
-        # Try multiple content selectors
+        # Try multiple content selectors (broader for DAWN)
+        candidates = list(content_selectors) + [
+            '.story-body', '#story-content', '.story', '[class*="story"]',
+            '.article__body', 'main'
+        ]
         content_container = None
-        for selector in content_selectors:
-            content_container = article_soup.select_one(selector)
-            if content_container:
+        for selector in candidates:
+            try:
+                node = article_soup.select_one(selector)
+            except Exception:
+                node = None
+            if node:
+                content_container = node
                 break
         
-        if not content_container:
-            logger.warning(f"No content container found for {article_url}")
-            return None
-            
-        paragraphs = content_container.find_all('p')
+        paragraphs = []
+        if content_container:
+            paragraphs = content_container.find_all('p') or []
+        if not paragraphs:
+            paragraphs = article_soup.find_all('p') or []
         full_content = '\n'.join(p.get_text(strip=True) for p in paragraphs)
         
-        if not full_content or len(full_content.strip()) < 50:
-            logger.warning(f"Insufficient content for {article_url}")
+        if not full_content or len(full_content.strip()) < 10:
+            # Fallback to meta description
+            try:
+                meta_desc = article_soup.select_one('meta[name="description"]')
+                if meta_desc and meta_desc.get('content'):
+                    full_content = meta_desc.get('content').strip()
+            except Exception:
+                pass
+        if not full_content:
+            logger.warning(f"No usable content extracted for {article_url}")
             return None
             
+        pub_iso = None
+        try:
+            tnode = article_soup.select_one('.story__time .timestamp--time')
+            if tnode and tnode.get('title'):
+                raw = tnode.get('title').strip()
+                try:
+                    dt = datetime.strptime(raw, "%d %b, %Y %I:%M%p")
+                    pub_iso = dt.isoformat()
+                except Exception:
+                    pub_iso = None
+            if not pub_iso:
+                m = article_soup.select_one('meta[property="article:published_time"]')
+                if m and m.get('content'):
+                    c = m.get('content').strip()
+                    try:
+                        pub_iso = datetime.fromisoformat(c.replace('Z', '+00:00')).isoformat()
+                    except Exception:
+                        pub_iso = None
+        except Exception:
+            pub_iso = None
+        # Use canonical URL from meta if present
+        canon_url = canonicalize_url(article_url)
+        try:
+            og = article_soup.select_one('meta[property="og:url"]')
+            if og and og.get('content'):
+                canon_url = canonicalize_url(og.get('content').strip())
+        except Exception:
+            pass
+        # Final dedupe before returning
+        try:
+            from ..models import Article
+            exists2 = Article.query.filter_by(url=canon_url).first()
+            if exists2:
+                return None
+        except Exception:
+            pass
+
         return {
             "title": title,
-            "url": article_url,
+            "url": canon_url,
             "source": source_name,
             "content": full_content,
-            "date": datetime.now().isoformat(),
-            "category": "Pakistan News"
+            "date": pub_iso,
+            "category": "general"
         }
     except requests.RequestException as page_err:
         logger.warning(f"Failed to fetch content for {article_info['url']}: {str(page_err)}")
@@ -106,16 +199,26 @@ def fetch_from_newsapi(limit=10):
     params = {'country': 'pk', 'pageSize': limit, 'apiKey': NEWS_API_KEY}  # Changed to Pakistan
     
     try:
+        # Preload source → category map
+        _load_newsapi_source_category_map()
         data = http_get(url, params=params)
         articles = []
         for item in data.get('articles', []):
+            src_info = item.get('source', {}) or {}
+            src_id = (src_info.get('id') or '').lower() if src_info.get('id') else ''
+            src_name = (src_info.get('name') or '').lower() if src_info.get('name') else ''
+            cat = (
+                NEWSAPI_SOURCE_CATEGORY_MAP.get(src_id)
+                or NEWSAPI_SOURCE_CATEGORY_MAP.get(src_name)
+                or 'general'
+            )
             articles.append({
                 "title": item.get('title'),
                 "url": item.get('url'),
                 "source": "NewsAPI.org",
                 "content": item.get('description') or item.get('content'),
                 "date": normalize_date(item.get('publishedAt')),
-                "category": item.get('source', {}).get('name')
+                "category": cat
             })
         return articles
     except Exception as e:
@@ -127,6 +230,45 @@ def fetch_from_newsapi(limit=10):
                 error_msg,
                 source='scraper'
             )
+        return []
+
+def fetch_from_newsapi_window(from_date, to_date, q=None, limit=50):
+    if not NEWS_API_KEY:
+        return []
+    url = "https://newsapi.org/v2/everything"
+    params = {
+        'from': from_date,
+        'to': to_date,
+        'pageSize': limit,
+        'language': 'en',
+        'sortBy': 'publishedAt'
+    }
+    if q:
+        params['q'] = q
+    headers = {'X-Api-Key': NEWS_API_KEY}
+    try:
+        _load_newsapi_source_category_map()
+        data = http_get(url, params=params, headers=headers)
+        articles = []
+        for item in data.get('articles', []):
+            src_info = item.get('source', {}) or {}
+            src_id = (src_info.get('id') or '').lower() if src_info.get('id') else ''
+            src_name = (src_info.get('name') or '').lower() if src_info.get('name') else ''
+            cat = (
+                NEWSAPI_SOURCE_CATEGORY_MAP.get(src_id)
+                or NEWSAPI_SOURCE_CATEGORY_MAP.get(src_name)
+                or 'general'
+            )
+            articles.append({
+                "title": item.get('title'),
+                "url": item.get('url'),
+                "source": "NewsAPI.org",
+                "content": item.get('description') or item.get('content'),
+                "date": normalize_date(item.get('publishedAt')),
+                "category": cat
+            })
+        return articles
+    except Exception:
         return []
 
 def fetch_from_currents(limit=10):
@@ -206,56 +348,72 @@ def fetch_from_guardian(limit=10):
             )
         return []
 
+def fetch_from_guardian_window(from_date, to_date, q=None, page_size=50):
+    if not GUARDIAN_API_KEY:
+        return []
+    url = "https://content.guardianapis.com/search"
+    params = {
+        'api-key': GUARDIAN_API_KEY,
+        'page-size': page_size,
+        'show-fields': 'trailText,headline',
+        'from-date': from_date,
+        'to-date': to_date
+    }
+    if q:
+        params['q'] = q
+    try:
+        data = http_get(url, params=params)
+        articles = []
+        for item in data.get('response', {}).get('results', []):
+            articles.append({
+                "title": item.get('fields', {}).get('headline'),
+                "url": item.get('webUrl'),
+                "source": "The Guardian",
+                "content": item.get('fields', {}).get('trailText'),
+                "date": normalize_date(item.get('webPublicationDate')),
+                "category": item.get('sectionName')
+            })
+        return articles
+    except Exception:
+        return []
+
 def fetch_from_dawn(limit=10):
-    """Fetch news from DAWN Pakistan concurrently."""
     try:
         url = "https://www.dawn.com/"
-        
         response = requests.get(url, headers=HEADERS, timeout=DEFAULT_TIMEOUT_SECONDS)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
-        
+        anchors = soup.select('div.tabs__pane#all article.story h2.story__title a.story__link')
+        if not anchors:
+            anchors = soup.select('article.story h2.story__title a.story__link')
+        if not anchors:
+            anchors = soup.select('a[href*="/news/"]')
         articles_to_fetch = []
-        article_links = soup.select('a[href*="/news/"]', limit=limit * 2)  # Fetch more links to ensure we get enough valid ones
-
-        for link in article_links:
+        for a in anchors:
             if len(articles_to_fetch) >= limit:
                 break
-
-            title = link.get_text(strip=True)
-            article_url = link.get('href')
-
-            if not article_url or not title or len(title) < 20:
+            href = a.get('href')
+            title = a.get_text(strip=True)
+            if not href or not title or len(title) < 10:
                 continue
-
-            if not article_url.startswith('http'):
-                article_url = 'https://www.dawn.com' + article_url
-            
-            articles_to_fetch.append({'url': article_url, 'title': title})
-
-        # DAWN-specific content selectors
+            if not href.startswith('http'):
+                href = 'https://www.dawn.com' + href
+            if 'www.dawn.com/news/' not in href:
+                continue
+            articles_to_fetch.append({'url': canonicalize_url(href), 'title': title})
         content_selectors = ['.story__content', '.story-content', '.article-content', 'article', '.content']
-        
         articles = []
         with ThreadPoolExecutor(max_workers=5) as executor:
-            future_to_article = {
-                executor.submit(fetch_article_content, article, HEADERS, content_selectors, "DAWN"): article 
-                for article in articles_to_fetch
-            }
-            
-            for future in as_completed(future_to_article):
+            futures = [executor.submit(fetch_article_content, item, HEADERS, content_selectors, "DAWN") for item in articles_to_fetch]
+            for f in as_completed(futures):
                 try:
-                    result = future.result()
-                    if result:
-                        articles.append(result)
-                except Exception as exc:
-                    article_info = future_to_article[future]
-                    logger.error(f"{article_info['url']} generated an exception: {exc}")
-
-        logger.info(f"Successfully scraped {len(articles)} full articles from DAWN.")
+                    r = f.result()
+                    if r:
+                        articles.append(r)
+                except Exception:
+                    continue
         return articles
-    except Exception as e:
-        logger.error(f"Failed to fetch from DAWN. Error: {str(e)}")
+    except Exception:
         return []
 
 def fetch_from_daily_express(limit=10):
@@ -543,3 +701,21 @@ def get_news_from_sources():
             logger.error(f"Error in source aggregation for {fetch_func.__name__}: {str(err)}")
     
     return result
+def canonicalize_url(url):
+    try:
+        if not url:
+            return url
+        p = urlparse(url)
+        # strip query and fragment
+        path = p.path or ''
+        # remove trailing slash
+        if path != '/' and path.endswith('/'):
+            path = path[:-1]
+        # remove AMP suffix
+        if path.endswith('/amp'):
+            path = path[:-4]
+        # reconstruct without params, query, fragment
+        canon = urlunparse((p.scheme, p.netloc.lower(), path, '', '', ''))
+        return canon
+    except Exception:
+        return url

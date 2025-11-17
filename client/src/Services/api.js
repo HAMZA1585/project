@@ -60,8 +60,12 @@ export const fetchNews = async () => {
         return response.data || { articles: [], trends: [] };
     } catch (error) {
         console.error("Error fetching news: ", error);
+        const status = error.response?.status;
+        if (status === 404 || status === 200) {
+            return { articles: [], trends: [] };
+        }
         toast.error(error.response?.data?.error || 'Failed to fetch news');
-        throw error;
+        return { articles: [], trends: [] };
     }
 };
 
@@ -250,14 +254,37 @@ export const fetchAvailableDates = async () => {
     }
 };
 
+export const fetchArchiveLiveWindow = async (payload) => {
+    try {
+        const response = await api.post('/api/v1/archive/live-fetch', payload);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching live window: ", error);
+        toast.error(error.response?.data?.error || 'Failed to fetch live window data');
+        throw error;
+    }
+};
+
 // Advanced Search API functions
 export const advancedSearch = async (searchParams) => {
     try {
         const params = new URLSearchParams();
         Object.entries(searchParams).forEach(([key, value]) => {
-            if (value && value.trim()) {
-                params.append(key, value.trim());
+            if (value === undefined || value === null) return;
+            if (typeof value === 'string') {
+                const v = value.trim();
+                if (v) params.append(key, v);
+                return;
             }
+            if (Array.isArray(value)) {
+                value
+                  .map(x => String(x).trim())
+                  .filter(Boolean)
+                  .forEach(v => params.append(key, v));
+                return;
+            }
+            const v = String(value).trim();
+            if (v) params.append(key, v);
         });
         
         const response = await api.get(`/api/v1/advanced-search/search?${params.toString()}`);
@@ -310,6 +337,28 @@ export const fetchSearchStats = async (location = '') => {
     } catch (error) {
         console.error("Error fetching search stats: ", error);
         toast.error(error.response?.data?.error || 'Failed to fetch search statistics');
+        throw error;
+    }
+};
+
+export const scrapePakistanLocal = async (limit = 8) => {
+    try {
+        const response = await api.post('/api/v1/advanced-search/scrape-pakistan', { limit });
+        return response.data;
+    } catch (error) {
+        console.error("Error scraping Pakistan local sources: ", error);
+        toast.error(error.response?.data?.error || 'Failed to scrape local Pakistan news');
+        throw error;
+    }
+};
+
+export const scrapePakistanLocalAgent = async (limit = 8) => {
+    try {
+        const response = await api.post('/api/v1/advanced-search/scrape-pakistan-agent', { limit });
+        return response.data;
+    } catch (error) {
+        console.error("Error queuing Pakistan local agent: ", error);
+        toast.error(error.response?.data?.error || 'Failed to queue local Pakistan agent');
         throw error;
     }
 };

@@ -17,7 +17,10 @@ const notificationSlice = createSlice({
   reducers: {
     addNotification: (state, action) => {
       const notification = {
-        id: Date.now(),
+        id:
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         timestamp: new Date().toISOString(),
         read: false,
         ...action.payload,
@@ -52,7 +55,10 @@ const notificationSlice = createSlice({
       if (spike >= threshold) {
         const direction = current > previous ? 'positive' : 'negative';
         state.notifications.unshift({
-          id: Date.now(),
+          id:
+            typeof crypto !== 'undefined' && crypto.randomUUID
+              ? crypto.randomUUID()
+              : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           type: 'sentiment_spike',
           title: `Sentiment ${direction} spike detected`,
           message: `Sentiment changed by ${(spike * 100).toFixed(1)}%`,
@@ -71,7 +77,10 @@ const notificationSlice = createSlice({
       
       if (isBreaking) {
         state.notifications.unshift({
-          id: Date.now(),
+          id:
+            typeof crypto !== 'undefined' && crypto.randomUUID
+              ? crypto.randomUUID()
+              : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           type: 'breaking_news',
           title: 'Breaking News Alert',
           message: article.title,
@@ -91,7 +100,10 @@ const notificationSlice = createSlice({
       
       if (isCritical) {
         state.notifications.unshift({
-          id: Date.now(),
+          id:
+            typeof crypto !== 'undefined' && crypto.randomUUID
+              ? crypto.randomUUID()
+              : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           type: 'critical_event',
           title: 'Critical Event Detected',
           message: article.title,

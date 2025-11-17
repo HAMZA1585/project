@@ -327,7 +327,7 @@ const ContentCuration = () => {
           </div>
           
           <Grid container spacing={3}>
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <Card className="text-center">
                 <CardContent>
                   <Typography variant="h4" className="font-bold text-blue-600">
@@ -340,7 +340,7 @@ const ContentCuration = () => {
               </Card>
             </Grid>
             
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <Card className="text-center">
                 <CardContent>
                   <Typography variant="h4" className="font-bold text-green-600">
@@ -353,7 +353,7 @@ const ContentCuration = () => {
               </Card>
             </Grid>
             
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <Card className="text-center">
                 <CardContent>
                   <Typography variant="h4" className="font-bold text-orange-600">
@@ -366,7 +366,7 @@ const ContentCuration = () => {
               </Card>
             </Grid>
             
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <Card className="text-center">
                 <CardContent>
                   <Typography variant="h4" className="font-bold text-purple-600">
@@ -379,7 +379,7 @@ const ContentCuration = () => {
               </Card>
             </Grid>
             
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <Card className="text-center">
                 <CardContent>
                   <Typography variant="h4" className="font-bold text-indigo-600">
@@ -392,7 +392,7 @@ const ContentCuration = () => {
               </Card>
             </Grid>
             
-            <Grid item xs={12} md={2}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <Card className="text-center">
                 <CardContent>
                   <Typography variant="h4" className="font-bold text-teal-600">
