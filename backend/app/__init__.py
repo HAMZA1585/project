@@ -8,6 +8,8 @@ from .config import DevelopmentConfig, ProductionConfig, TestingConfig
 from .utils import setup_logging
 from flask_cors import CORS 
 from flask import request, jsonify
+import threading
+import time
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -85,6 +87,68 @@ def create_app():
         # Create all database tables
         db.create_all()
         print("DEBUG: Database tables created/verified")
+
+        try:
+            # Ensure FTS5 virtual table exists for advanced search
+            exists = db.session.execute(
+                db.text("""
+                    SELECT name FROM sqlite_master WHERE type='table' AND name='articles_fts'
+                """)
+            ).fetchone()
+            if not exists:
+                db.session.execute(db.text("""
+                    CREATE VIRTUAL TABLE articles_fts USING fts5(
+                        title,
+                        content,
+                        content='articles',
+                        content_rowid='id'
+                    )
+                """))
+                db.session.execute(db.text("""
+                    CREATE TRIGGER articles_ai AFTER INSERT ON articles BEGIN
+                        INSERT INTO articles_fts(rowid, title, content)
+                        VALUES (new.id, new.title, new.content);
+                    END
+                """))
+                db.session.execute(db.text("""
+                    CREATE TRIGGER articles_au AFTER UPDATE ON articles BEGIN
+                        UPDATE articles_fts SET title = new.title, content = new.content
+                        WHERE rowid = new.id;
+                    END
+                """))
+                db.session.execute(db.text("""
+                    CREATE TRIGGER articles_ad AFTER DELETE ON articles BEGIN
+                        DELETE FROM articles_fts WHERE rowid = old.id;
+                    END
+                """))
+                db.session.execute(db.text("""
+                    INSERT INTO articles_fts(rowid, title, content)
+                    SELECT id, title, content FROM articles
+                """))
+                db.session.commit()
+                print("DEBUG: FTS5 table and triggers created/populated")
+        except Exception as fts_err:
+            print(f"DEBUG: FTS5 setup error: {fts_err}")
+
+        try:
+            enable_auto = os.getenv('AUTOSCRAPE_DAWN', 'true').lower() in ['1','true','yes']
+            if enable_auto:
+                interval_min = int(os.getenv('AUTOSCRAPE_INTERVAL_MINUTES', '30'))
+                limit = int(os.getenv('AUTOSCRAPE_LIMIT', '8'))
+                from .tasks import run_dawn_scrape_sync
+                from .tasks import update_dawn_missing_dates
+                def _loop():
+                    while True:
+                        try:
+                            run_dawn_scrape_sync(limit)
+                            update_dawn_missing_dates(50)
+                        except Exception:
+                            pass
+                        time.sleep(max(5, interval_min * 60))
+                t = threading.Thread(target=_loop, daemon=True)
+                t.start()
+        except Exception:
+            pass
 
     # Error handling helpers
     def _wants_json_response():

@@ -11,14 +11,40 @@ from app.models import Article, Trend, SystemNotification
 from app.services.scraper import (
     fetch_from_dawn, fetch_from_daily_express, fetch_from_nation,
     fetch_from_pakistan_times, fetch_from_pakistan_observer, fetch_from_urdu_point,
-    fetch_from_newsapi, fetch_from_currents, fetch_from_guardian
+    fetch_from_newsapi, fetch_from_currents, fetch_from_guardian,
+    fetch_from_newsapi_window, fetch_from_guardian_window
 )
+from app.services.sentiment import analyze_sentiment
 from app.services.sentiment import analyze_sentiment
 from app.services.trend import analyze_news_trends
 import os
 import requests
+import random
+import time
+from app.services.scraper import fetch_from_dawn
+from app.services.scraper import canonicalize_url
 
 logger = logging.getLogger(__name__)
+
+# Known Pakistani locations for simple inference from text
+KNOWN_LOCATIONS = [
+    'Islamabad', 'Lahore', 'Karachi', 'Rawalpindi', 'Faisalabad',
+    'Multan', 'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala',
+    'Hyderabad', 'Sukkur', 'Larkana', 'Nawabshah', 'Mirpur Khas',
+    'Rahim Yar Khan', 'Sargodha', 'Bahawalpur', 'Sheikhupura',
+    'Jhang', 'Gujrat', 'Kasur', 'Mardan', 'Mingora', 'Chiniot',
+    'Kotri', 'Kamoke', 'Hafizabad', 'Kohat', 'Jacobabad',
+    'Shikarpur', 'Muzaffargarh', 'Khanpur', 'Hassan Abdal',
+    'Kamalia', 'Tando Adam', 'Jhelum', 'Sahiwal', 'Okara',
+    'Wah Cantonment', 'Dera Ghazi Khan', 'Chakwal', 'Gojra', 'Bahawalnagar'
+]
+
+def infer_location_from_text(title, content):
+    text = f"{title or ''} {content or ''}".lower()
+    for loc in KNOWN_LOCATIONS:
+        if loc.lower() in text:
+            return loc
+    return None
 
 # Source mapping for page-by-page scraping tasks
 SCRAPING_FUNCTIONS = {
@@ -420,6 +446,9 @@ def scrape_api_source_task(source_name, limit=10):
                             article_date = None
                     
                     # Create new article
+                    inferred_loc = infer_location_from_text(article_data.get('title'), article_data.get('content'))
+                    text_to_analyze = article_data.get('content') or article_data.get('title') or ''
+                    sent = analyze_sentiment(text_to_analyze) if text_to_analyze else {'label': None, 'score': None}
                     new_article = Article(
                         title=article_data.get('title'),
                         url=article_data.get('url'),
@@ -427,7 +456,9 @@ def scrape_api_source_task(source_name, limit=10):
                         content=article_data.get('content'),
                         category=article_data.get('category'),
                         date=article_date,
-                        location=article_data.get('location') # APIs might provide this
+                        location=article_data.get('location') or inferred_loc,
+                        sentiment_label=(sent.get('label').capitalize() if sent.get('label') else None),
+                        sentiment_score=sent.get('score')
                     )
                     
                     db.session.add(new_article)
@@ -516,6 +547,80 @@ def queue_all_scraping_tasks(limit=10):
         
         return job_ids
 
+@rq.job('scraping', timeout='5m')
+def upsert_articles_task(batch):
+    app = create_app()
+    with app.app_context():
+        added = 0
+        for article_data in batch:
+            url = article_data.get('url')
+            if not url:
+                continue
+            existing = Article.query.filter_by(url=url).first()
+            if existing:
+                if not existing.content and article_data.get('content'):
+                    existing.content = article_data.get('content')
+                if not existing.category and article_data.get('category'):
+                    existing.category = article_data.get('category')
+                if not existing.sentiment_label and article_data.get('sentiment_label'):
+                    existing.sentiment_label = article_data.get('sentiment_label')
+                if not existing.sentiment_score and article_data.get('sentiment_score') is not None:
+                    existing.sentiment_score = article_data.get('sentiment_score')
+                if not existing.location:
+                    inferred_loc = infer_location_from_text(article_data.get('title'), article_data.get('content'))
+                    existing.location = article_data.get('location') or inferred_loc
+                if (not existing.sentiment_label or not existing.sentiment_score) and existing.content:
+                    try:
+                        s = analyze_sentiment(existing.content)
+                        existing.sentiment_label = s.get('label')
+                        existing.sentiment_score = s.get('score')
+                    except Exception:
+                        pass
+                if article_data.get('date'):
+                    try:
+                        existing.date = datetime.fromisoformat(article_data.get('date'))
+                    except Exception:
+                        pass
+            else:
+                try:
+                    date_val = None
+                    if article_data.get('date'):
+                        try:
+                            date_val = datetime.fromisoformat(article_data.get('date'))
+                        except Exception:
+                            date_val = None
+                    sent_label = article_data.get('sentiment_label')
+                    sent_score = article_data.get('sentiment_score')
+                    if (not sent_label or sent_score is None) and article_data.get('content'):
+                        try:
+                            s = analyze_sentiment(article_data.get('content'))
+                            sent_label = s.get('label')
+                            sent_score = s.get('score')
+                        except Exception:
+                            sent_label = None
+                            sent_score = None
+                    inferred_loc = infer_location_from_text(article_data.get('title'), article_data.get('content'))
+                    new_article = Article(
+                        title=article_data.get('title') or '',
+                        url=url,
+                        source=article_data.get('source') or '',
+                        content=article_data.get('content'),
+                        category=article_data.get('category'),
+                        date=date_val,
+                        location=article_data.get('location') or inferred_loc,
+                        sentiment_label=sent_label,
+                        sentiment_score=sent_score
+                    )
+                    db.session.add(new_article)
+                    added += 1
+                except Exception:
+                    continue
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return {'inserted': added}
+
 def queue_trend_analysis_task():
     """
     Queue a trend analysis task.
@@ -532,3 +637,138 @@ def queue_trend_analysis_task():
         except Exception as e:
             logger.error(f"Failed to queue trend analysis task: {str(e)}")
             return None
+
+def infer_locations_for_existing(max_rows=1000):
+    """Infer and populate missing locations for existing articles.
+    Returns dict with counts of processed and updated.
+    """
+    app = create_app()
+    with app.app_context():
+        query = Article.query.filter(Article.location.is_(None))
+        if max_rows:
+            articles = query.limit(max_rows).all()
+        else:
+            articles = query.all()
+        updated = 0
+        for a in articles:
+            loc = infer_location_from_text(a.title, a.content)
+            if loc:
+                a.location = loc
+                updated += 1
+        try:
+            if updated:
+                db.session.commit()
+            else:
+                db.session.rollback()
+        except Exception:
+            db.session.rollback()
+        return {'processed': len(articles), 'updated': updated}
+
+@rq.job('scraping', timeout='5m')
+def human_like_local_scrape_task(limit=8):
+    app = create_app()
+    with app.app_context():
+        names = list(SCRAPING_FUNCTIONS.keys())
+        random.shuffle(names)
+        queued = []
+        for name in names:
+            time.sleep(random.uniform(0.5, 2.0))
+            try:
+                job = scrape_source_task.queue(name, limit)
+                queued.append({'source': name, 'job_id': job.id})
+            except Exception:
+                continue
+        return {'queued': len(queued), 'tasks': queued}
+
+def run_dawn_scrape_sync(limit=8):
+    app = create_app()
+    with app.app_context():
+        articles = []
+        try:
+            articles = fetch_from_dawn(limit=limit)
+        except Exception:
+            articles = []
+        added = 0
+        for a in articles:
+            url = a.get('url')
+            if not url:
+                continue
+            canon = canonicalize_url(url)
+            existing = Article.query.filter_by(url=canon).first()
+            if existing:
+                continue
+            date_val = None
+            if a.get('date'):
+                try:
+                    date_val = datetime.fromisoformat(a.get('date').replace('Z', '+00:00'))
+                except Exception:
+                    date_val = None
+            text_to_analyze = a.get('content') or a.get('title') or ''
+            sent = analyze_sentiment(text_to_analyze) if text_to_analyze else {'label': None, 'score': None}
+            inferred_loc = infer_location_from_text(a.get('title'), a.get('content'))
+            new_article = Article(
+                title=a.get('title') or '',
+                url=canon,
+                source='DAWN',
+                content=a.get('content'),
+                category=a.get('category'),
+                date=date_val,
+                location=a.get('location') or inferred_loc,
+                sentiment_label=(sent.get('label').capitalize() if sent.get('label') else None),
+                sentiment_score=sent.get('score')
+            )
+            try:
+                db.session.add(new_article)
+                db.session.commit()
+                added += 1
+            except Exception:
+                db.session.rollback()
+                continue
+        return {'found': len(articles), 'added': added}
+
+def update_dawn_missing_dates(max_rows=30):
+    app = create_app()
+    with app.app_context():
+        q = Article.query.filter(Article.source == 'DAWN', Article.date.is_(None))
+        items = q.limit(max_rows).all()
+        updated = 0
+        from app.services.scraper import HEADERS
+        import requests
+        from bs4 import BeautifulSoup
+        for art in items:
+            url = art.url
+            try:
+                r = requests.get(url, headers=HEADERS, timeout=15)
+                r.raise_for_status()
+                s = BeautifulSoup(r.content, 'html.parser')
+                tnode = s.select_one('.story__time .timestamp--time')
+                val = None
+                if tnode and tnode.get('title'):
+                    raw = tnode.get('title').strip()
+                    try:
+                        dt = datetime.strptime(raw, "%d %b, %Y %I:%M%p")
+                        val = dt
+                    except Exception:
+                        val = None
+                if not val:
+                    m = s.select_one('meta[property="article:published_time"]')
+                    if m and m.get('content'):
+                        c = m.get('content').strip()
+                        try:
+                            val = datetime.fromisoformat(c.replace('Z', '+00:00'))
+                        except Exception:
+                            val = None
+                if val:
+                    art.date = val
+                    updated += 1
+                    db.session.add(art)
+            except Exception:
+                continue
+        try:
+            if updated:
+                db.session.commit()
+            else:
+                db.session.rollback()
+        except Exception:
+            db.session.rollback()
+        return {'processed': len(items), 'updated': updated}

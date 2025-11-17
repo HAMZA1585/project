@@ -88,3 +88,14 @@ class SearchAlert(db.Model):
     def __repr__(self):
         return f"<SearchAlert {self.name} active={self.is_active}>"
 
+class ScrapeJob(db.Model):
+    __tablename__ = 'scrape_jobs'
+    id = db.Column(db.Integer, primary_key=True)
+    status = db.Column(db.String(50), nullable=False, default='queued')
+    found = db.Column(db.Integer, default=0)
+    added = db.Column(db.Integer, default=0)
+    sources = db.Column(db.JSON, nullable=True)
+    queued_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    started_at = db.Column(db.DateTime, nullable=True)
+    finished_at = db.Column(db.DateTime, nullable=True)
+

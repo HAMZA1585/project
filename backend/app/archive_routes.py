@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from sqlalchemy import desc, and_, func, or_
 from .models import Article, Trend
 from . import db
+from .tasks import upsert_articles_task
+from .services.scraper import fetch_from_newsapi_window, fetch_from_guardian_window
 
 archive_bp = Blueprint('archive', __name__)
 
@@ -297,62 +299,66 @@ def get_archive_stats():
         # Get date range if provided
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
-        
+
         start_date = None
         end_date = None
-        
+
         if start_date_str:
             start_date = datetime.fromisoformat(start_date_str)
         if end_date_str:
             end_date = datetime.fromisoformat(end_date_str)
-        
+
         # Build base query
         query = Article.query
         if start_date:
             query = query.filter(Article.date >= start_date)
         if end_date:
             query = query.filter(Article.date <= end_date)
-        
+
         # Get basic stats
         total_articles = query.count()
-        
+
         # Articles by source
         sources = db.session.query(
             Article.source,
             func.count(Article.id).label('count')
         ).group_by(Article.source)
-        
+
         if start_date:
             sources = sources.filter(Article.date >= start_date)
         if end_date:
             sources = sources.filter(Article.date <= end_date)
-        
+
         sources = sources.all()
-        
+
         # Articles by sentiment
         sentiments = db.session.query(
             Article.sentiment_label,
             func.count(Article.id).label('count')
         ).group_by(Article.sentiment_label)
-        
+
         if start_date:
             sentiments = sentiments.filter(Article.date >= start_date)
         if end_date:
             sentiments = sentiments.filter(Article.date <= end_date)
-        
+
         sentiments = sentiments.all()
-        
-        # Articles by month (for the last 12 months)
-        twelve_months_ago = datetime.now() - timedelta(days=365)
-        monthly_stats = db.session.query(
+
+        monthly_query = db.session.query(
             func.strftime('%Y-%m', Article.date).label('month'),
             func.count(Article.id).label('count')
-        ).filter(
-            Article.date >= twelve_months_ago
-        ).group_by(
+        )
+        if start_date:
+            monthly_query = monthly_query.filter(Article.date >= start_date)
+        if end_date:
+            monthly_query = monthly_query.filter(Article.date <= end_date)
+        if not start_date and not end_date:
+            window_start = datetime.now() - timedelta(days=365)
+            monthly_query = monthly_query.filter(Article.date >= window_start)
+        monthly_stats = monthly_query.group_by(
             func.strftime('%Y-%m', Article.date)
         ).order_by('month').all()
-        
+
         return jsonify({
             'total_articles': total_articles,
             'sources': [{'source': s[0], 'count': s[1]} for s in sources],
@@ -363,7 +369,7 @@ def get_archive_stats():
                 'end_date': end_date_str
             }
         })
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -397,6 +403,81 @@ def get_available_dates():
                 } for m in months
             ]
         })
-        
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@archive_bp.route('/archive/live-fetch', methods=['POST'])
+def live_fetch_window():
+    try:
+        payload = request.get_json() or {}
+        t = payload.get('type')
+        period = payload.get('period')
+        year = payload.get('year')
+        month = payload.get('month')
+        start_date_str = payload.get('start_date')
+        end_date_str = payload.get('end_date')
+        q = payload.get('q')
+        now = datetime.now()
+        start_dt = None
+        end_dt = None
+        if t == 'period':
+            if period == 'last_week':
+                start_dt = now - timedelta(days=7)
+                end_dt = now
+            elif period == 'last_month':
+                start_dt = now - timedelta(days=30)
+                end_dt = now
+            elif period == 'last_quarter':
+                start_dt = now - timedelta(days=90)
+                end_dt = now
+            elif period == 'last_year':
+                start_dt = now - timedelta(days=365)
+                end_dt = now
+            else:
+                return jsonify({'error': 'Invalid period'}), 400
+        elif t == 'month':
+            y = int(year)
+            m = int(month)
+            start_dt = datetime(y, m, 1)
+            if m == 12:
+                end_dt = datetime(y + 1, 1, 1) - timedelta(seconds=1)
+            else:
+                end_dt = datetime(y, m + 1, 1) - timedelta(seconds=1)
+        elif t == 'range':
+            if start_date_str:
+                start_dt = datetime.fromisoformat(start_date_str)
+            if end_date_str:
+                end_dt = datetime.fromisoformat(end_date_str)
+            if start_dt and not end_dt:
+                end_dt = now
+            if not start_dt and not end_dt:
+                return jsonify({'error': 'start_date or end_date required'}), 400
+        else:
+            return jsonify({'error': 'Invalid type'}), 400
+        from_iso = start_dt.isoformat()
+        to_iso = end_dt.isoformat()
+        live_articles = []
+        live_articles += fetch_from_newsapi_window(from_iso, to_iso, q=q, limit=50)
+        live_articles += fetch_from_guardian_window(from_iso, to_iso, q=q, page_size=50)
+        existing_urls_query = db.session.query(Article.url)
+        if start_dt:
+            existing_urls_query = existing_urls_query.filter(Article.date >= start_dt)
+        if end_dt:
+            existing_urls_query = existing_urls_query.filter(Article.date <= end_dt)
+        existing_urls = set(u[0] for u in existing_urls_query.all())
+        deduped = []
+        seen = set()
+        for a in live_articles:
+            u = a.get('url')
+            if not u or u in seen or u in existing_urls:
+                continue
+            seen.add(u)
+            deduped.append(a)
+        try:
+            upsert_articles_task.queue(deduped)
+        except Exception:
+            pass
+        return jsonify({'live': deduped, 'window': {'start_date': from_iso, 'end_date': to_iso}})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

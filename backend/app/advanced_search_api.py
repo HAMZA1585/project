@@ -9,9 +9,48 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_, and_, desc, func, text
 from .models import Article
 from . import db
+from .tasks import infer_location_from_text
+from .services.scraper import (
+    fetch_from_dawn,
+    fetch_from_daily_express,
+    fetch_from_nation,
+    fetch_from_pakistan_times,
+    fetch_from_pakistan_observer,
+    fetch_from_urdu_point,
+)
+from .services.sentiment import analyze_sentiment
+from .tasks import human_like_local_scrape_task
+from flask import current_app
+import threading
+from datetime import datetime
+from .models import ScrapeJob
+from .tasks import update_dawn_missing_dates
 
 # Create blueprint for advanced search
 advanced_search_bp = Blueprint('advanced_search_api', __name__)
+
+# Curated category taxonomy for UI and fallback search
+DEFAULT_CATEGORIES = [
+    'Crime', 'Sports', 'Health', 'Politics', 'Business', 'Technology',
+    'Entertainment', 'Education', 'Environment', 'Weather', 'Accident', 'Science', 'General'
+]
+
+# Simple keyword expansions used when category is selected without a keyword
+CATEGORY_KEYWORDS = {
+    'Crime': ['crime', 'police', 'murder', 'theft', 'investigation'],
+    'Sports': ['sport', 'sports', 'cricket', 'football', 'match', 'tournament'],
+    'Health': ['health', 'hospital', 'medicine', 'patient', 'disease'],
+    'Politics': ['politics', 'government', 'minister', 'parliament', 'election'],
+    'Business': ['business', 'economy', 'market', 'trade', 'finance'],
+    'Technology': ['technology', 'tech', 'software', 'ai', 'startup'],
+    'Entertainment': ['entertainment', 'film', 'movie', 'music', 'celebrity'],
+    'Education': ['education', 'school', 'university', 'exam', 'student'],
+    'Environment': ['environment', 'climate', 'pollution', 'wildlife'],
+    'Weather': ['weather', 'storm', 'rain', 'flood', 'heatwave'],
+    'Accident': ['accident', 'collision', 'crash'],
+    'Science': ['science', 'research', 'study'],
+    'General': ['news']
+}
 
 @advanced_search_bp.route('/search', methods=['GET'])
 def advanced_search():
@@ -30,10 +69,15 @@ def advanced_search():
     try:
         # Get query parameters
         keyword = request.args.get('keyword', '').strip()
-        location = request.args.get('location', '').strip()
-        category = request.args.get('category', '').strip()
-        source = request.args.get('source', '').strip()
-        sentiment = request.args.get('sentiment', '').strip()
+        # Support repeated params (?location=a&location=b) and comma-separated lists
+        location_list = request.args.getlist('location')
+        category_list = request.args.getlist('category')
+        source_list = request.args.getlist('source')
+        location_param = request.args.get('location', '').strip()
+        category_param = request.args.get('category', '').strip()
+        source_param = request.args.get('source', '').strip()
+        sentiment_list = request.args.getlist('sentiment')
+        sentiment_param = request.args.get('sentiment', '').strip()
         limit = min(int(request.args.get('limit', 50)), 100)  # Max 100 results
         page = max(int(request.args.get('page', 1)), 1)
         
@@ -43,6 +87,17 @@ def advanced_search():
         # Apply filters using efficient methods
         filters = []
         
+        # If category provided but keyword empty, expand category into a keyword query
+        if not keyword and (category_param or category_list):
+            cats = [v.strip() for v in (category_list if category_list else category_param.split(',')) if v.strip()]
+            expanded = []
+            for c in cats:
+                # Normalize to Title Case for mapping
+                key = c.strip().title()
+                expanded += CATEGORY_KEYWORDS.get(key, [])
+            if expanded:
+                keyword = ' OR '.join(sorted(set(expanded)))
+
         # Full-text search for keywords using SQLite FTS5
         if keyword:
             # Use SQLite FTS5 for efficient text searching
@@ -55,29 +110,44 @@ def advanced_search():
             """)
             filters.append(keyword_filter)
         
-        # Exact match for location (much more efficient than LIKE)
-        if location:
-            location_filter = Article.location == location
-            filters.append(location_filter)
+        # Exact match for location; support multi-value (comma-separated) lists
+        if location_param or location_list:
+            locations = [v.strip() for v in (location_list if location_list else location_param.split(',')) if v.strip()]
+            if len(locations) == 1:
+                filters.append(Article.location == locations[0])
+            elif locations:
+                filters.append(Article.location.in_(locations))
         
-        # Exact match for category
-        if category:
-            category_filter = Article.category == category
-            filters.append(category_filter)
+        # Exact match for category; support multi-value lists
+        if category_param or category_list:
+            categories = [v.strip() for v in (category_list if category_list else category_param.split(',')) if v.strip()]
+            if len(categories) == 1:
+                filters.append(Article.category == categories[0])
+            elif categories:
+                filters.append(Article.category.in_(categories))
         
-        # Exact match for source
-        if source:
-            source_filter = Article.source == source
-            filters.append(source_filter)
+        # Exact match for source; support multi-value lists
+        if source_param or source_list:
+            sources = [v.strip() for v in (source_list if source_list else source_param.split(',')) if v.strip()]
+            if len(sources) == 1:
+                filters.append(Article.source == sources[0])
+            elif sources:
+                filters.append(Article.source.in_(sources))
         
-        # Exact match for sentiment
-        if sentiment:
-            sentiment_filter = Article.sentiment_label == sentiment.lower()
-            filters.append(sentiment_filter)
+        # Exact match for sentiment; support multi-value lists
+        if sentiment_param or sentiment_list:
+            sentiments = [v.strip().lower() for v in (sentiment_list if sentiment_list else sentiment_param.split(',')) if v.strip()]
+            if len(sentiments) == 1:
+                filters.append(Article.sentiment_label == sentiments[0])
+            elif sentiments:
+                filters.append(Article.sentiment_label.in_(sentiments))
         
         # Apply all filters
         if filters:
             query = query.filter(and_(*filters))
+            # Bind parameters for any textual filters (e.g., FTS5 MATCH :keyword)
+            if keyword:
+                query = query.params(keyword=keyword)
         
         # Order by date (newest first) with index support
         query = query.order_by(desc(Article.date))
@@ -124,10 +194,10 @@ def advanced_search():
             },
             'filters_applied': {
                 'keyword': keyword,
-                'location': location,
-                'category': category,
-                'source': source,
-                'sentiment': sentiment
+                'location': location_param,
+                'category': category_param,
+                'source': source_param,
+                'sentiment': sentiment_param or ','.join(sentiment_list)
             }
         }
         
@@ -135,6 +205,175 @@ def advanced_search():
         
     except Exception as e:
         return jsonify({'error': f'Search failed: {str(e)}'}), 500
+
+@advanced_search_bp.route('/scrape-pakistan', methods=['POST'])
+def scrape_pakistan_local():
+    try:
+        payload = request.get_json() or {}
+        limit = int(payload.get('limit', 8))
+        limit = max(1, min(limit, 20))
+        sources = [
+            ('DAWN', fetch_from_dawn),
+        ]
+
+        added = 0
+        found = 0
+        processed_sources = []
+        for name, func in sources:
+            articles = []
+            try:
+                articles = func(limit=limit)
+            except Exception:
+                articles = []
+            found += len(articles)
+            added_for_source = 0
+            for a in articles:
+                url = a.get('url')
+                if not url:
+                    continue
+                from .services.scraper import canonicalize_url
+                canon = canonicalize_url(url)
+                existing = Article.query.filter_by(url=canon).first()
+                if existing:
+                    continue
+                date_val = None
+                if a.get('date'):
+                    try:
+                        from datetime import datetime
+                        date_val = datetime.fromisoformat(a.get('date').replace('Z', '+00:00'))
+                    except Exception:
+                        date_val = None
+                text_to_analyze = a.get('content') or a.get('title') or ''
+                sent = analyze_sentiment(text_to_analyze) if text_to_analyze else {'label': None, 'score': None}
+                loc = a.get('location') or infer_location_from_text(a.get('title'), a.get('content'))
+                article = Article(
+                    title=a.get('title') or '',
+                    url=canon,
+                    source=a.get('source') or name,
+                    content=a.get('content'),
+                    category=a.get('category'),
+                    date=date_val,
+                    location=loc,
+                    sentiment_label=(sent.get('label').capitalize() if sent.get('label') else None),
+                    sentiment_score=sent.get('score')
+                )
+                try:
+                    db.session.add(article)
+                    db.session.commit()
+                    added_for_source += 1
+                except Exception:
+                    db.session.rollback()
+                    continue
+            added += added_for_source
+            processed_sources.append({'source': name, 'added': added_for_source})
+        return jsonify({'status': 'completed', 'found': found, 'added': added, 'sources': processed_sources})
+    except Exception as e:
+        return jsonify({'error': f'Pakistan scrape failed: {str(e)}'}), 500
+
+@advanced_search_bp.route('/scrape-pakistan-agent', methods=['POST'])
+def scrape_pakistan_local_agent():
+    try:
+        payload = request.get_json() or {}
+        limit = int(payload.get('limit', 8))
+        job = ScrapeJob(status='queued')
+        db.session.add(job)
+        db.session.commit()
+        app = current_app._get_current_object()
+        def _run(job_id, lim):
+            with app.app_context():
+                j = ScrapeJob.query.get(job_id)
+                if not j:
+                    return
+                j.status = 'running'
+                j.started_at = datetime.now()
+                db.session.commit()
+                sources = [
+                    ('DAWN', fetch_from_dawn),
+                ]
+                added = 0
+                found = 0
+                processed_sources = []
+                for name, func in sources:
+                    articles = []
+                    try:
+                        articles = func(limit=lim)
+                    except Exception:
+                        articles = []
+                    found += len(articles)
+                    added_for_source = 0
+                    for a in articles:
+                        url = a.get('url')
+                        if not url:
+                            continue
+                        existing = Article.query.filter_by(url=url).first()
+                        if existing:
+                            continue
+                        date_val = None
+                        if a.get('date'):
+                            try:
+                                date_val = datetime.fromisoformat(a.get('date').replace('Z', '+00:00'))
+                            except Exception:
+                                date_val = None
+                        text_to_analyze = a.get('content') or a.get('title') or ''
+                        sent = analyze_sentiment(text_to_analyze) if text_to_analyze else {'label': None, 'score': None}
+                        loc = a.get('location') or infer_location_from_text(a.get('title'), a.get('content'))
+                        article = Article(
+                            title=a.get('title') or '',
+                            url=url,
+                            source=a.get('source') or name,
+                            content=a.get('content'),
+                            category=a.get('category'),
+                            date=date_val,
+                            location=loc,
+                            sentiment_label=(sent.get('label').capitalize() if sent.get('label') else None),
+                            sentiment_score=sent.get('score')
+                        )
+                        try:
+                            db.session.add(article)
+                            db.session.commit()
+                            added_for_source += 1
+                        except Exception:
+                            db.session.rollback()
+                            continue
+                    added += added_for_source
+                    processed_sources.append({'source': name, 'added': added_for_source})
+                j.status = 'completed'
+                j.finished_at = datetime.now()
+                j.found = found
+                j.added = added
+                j.sources = processed_sources
+                db.session.commit()
+        t = threading.Thread(target=_run, args=(job.id, limit), daemon=True)
+        t.start()
+        return jsonify({'status': 'queued', 'job_id': job.id, 'mode': 'sql'})
+    except Exception as e:
+        return jsonify({'error': f'Agent queue failed: {str(e)}'}), 500
+
+@advanced_search_bp.route('/scrape-pakistan-agent/<int:job_id>', methods=['GET'])
+def scrape_pakistan_local_agent_status(job_id):
+    j = ScrapeJob.query.get(job_id)
+    if not j:
+        return jsonify({'error': 'Not found'}), 404
+    return jsonify({
+        'job_id': j.id,
+        'status': j.status,
+        'found': j.found,
+        'added': j.added,
+        'sources': j.sources,
+        'queued_at': j.queued_at.isoformat() if j.queued_at else None,
+        'started_at': j.started_at.isoformat() if j.started_at else None,
+        'finished_at': j.finished_at.isoformat() if j.finished_at else None,
+    })
+
+@advanced_search_bp.route('/fix-dawn-dates', methods=['POST'])
+def fix_dawn_dates():
+    try:
+        payload = request.get_json() or {}
+        max_rows = int(payload.get('max_rows', 50))
+        res = update_dawn_missing_dates(max_rows)
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @advanced_search_bp.route('/locations', methods=['GET'])
 def get_locations():
@@ -158,21 +397,14 @@ def get_locations():
 
 @advanced_search_bp.route('/categories', methods=['GET'])
 def get_categories():
-    """Get list of available categories"""
+    """Get list of available categories for filtering"""
     try:
-        # Get unique categories from database
-        categories = db.session.query(Article.category).filter(
-            Article.category.isnot(None)
-        ).distinct().all()
-        
-        category_list = [cat[0] for cat in categories if cat[0]]
-        category_list.sort()
-        
+        # Present a clean, curated taxonomy only
+        merged = sorted(set(DEFAULT_CATEGORIES))
         return jsonify({
-            'categories': category_list,
-            'count': len(category_list)
+            'categories': merged,
+            'count': len(merged)
         })
-        
     except Exception as e:
         return jsonify({'error': f'Failed to get categories: {str(e)}'}), 500
 

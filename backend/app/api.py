@@ -11,7 +11,7 @@ def get_articles():
         latest_trends = Trend.query.order_by(desc(Trend.score)).limit(10).all()
 
         if not latest_articles:
-            return jsonify({'message': 'No articles found in the database', 'articles': [], 'trends': []}), 404
+            return jsonify({'message': 'No articles found in the database', 'articles': [], 'trends': []}), 200
 
         articles_list = [
             {
