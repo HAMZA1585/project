@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from .services.sentiment import add_sentiments_to_news, analyze_sentiment
 
-sentiment_bp = Blueprint('sentiment_bp', __name__, url_prefix='/api/sentiment')
+sentiment_bp = Blueprint('sentiment_bp', __name__)
 
 @sentiment_bp.route('/', methods=['GET', 'POST'])
 def analyze_sentiment_endpoint():
@@ -37,6 +37,8 @@ def analyze_sentiment_endpoint():
     try:
         enriched_news = add_sentiments_to_news(news_data)
         return jsonify(enriched_news), 200
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 503
     except Exception as e:
         return jsonify({"error": f"Error processing sentiment: {str(e)}"}), 500
 
@@ -53,5 +55,7 @@ def analyze_single_text():
     try:
         result = analyze_sentiment(data['text'])
         return jsonify(result), 200
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 503
     except Exception as e:
         return jsonify({"error": f"Error analyzing sentiment: {str(e)}"}), 500

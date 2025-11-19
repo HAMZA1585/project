@@ -17,6 +17,8 @@ jwt = JWTManager()
 migrate = Migrate()
 rq = RQ()
 
+_autoscrape_started = False
+
 def create_app():
     app = Flask(__name__)
 
@@ -132,21 +134,23 @@ def create_app():
 
         try:
             enable_auto = os.getenv('AUTOSCRAPE_DAWN', 'true').lower() in ['1','true','yes']
-            if enable_auto:
+            if enable_auto and not globals().get('_autoscrape_started', False):
                 interval_min = int(os.getenv('AUTOSCRAPE_INTERVAL_MINUTES', '30'))
                 limit = int(os.getenv('AUTOSCRAPE_LIMIT', '8'))
                 from .tasks import run_dawn_scrape_sync
                 from .tasks import update_dawn_missing_dates
-                def _loop():
+                def _loop(app_ref):
                     while True:
                         try:
-                            run_dawn_scrape_sync(limit)
-                            update_dawn_missing_dates(50)
+                            with app_ref.app_context():
+                                run_dawn_scrape_sync(limit)
+                                update_dawn_missing_dates(50)
                         except Exception:
                             pass
                         time.sleep(max(5, interval_min * 60))
-                t = threading.Thread(target=_loop, daemon=True)
+                t = threading.Thread(target=_loop, args=(app,), daemon=True)
                 t.start()
+                globals()['_autoscrape_started'] = True
         except Exception:
             pass
 

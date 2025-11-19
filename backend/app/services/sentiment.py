@@ -54,8 +54,10 @@ def analyze_sentiment(text: str):
         RuntimeError: If sentiment model is not available
     """
     if sentiment_model is None:
-        logger.critical("❌ CRITICAL ERROR: Sentiment model not initialized")
-        raise RuntimeError("Sentiment analysis model not available - application cannot function")
+        try:
+            initialize_sentiment_model()
+        except Exception as e:
+            raise RuntimeError(f"Sentiment analysis model not available: {str(e)}")
     
     if not isinstance(text, str) or not text.strip():
         logger.warning("Empty or invalid text provided for sentiment analysis")
@@ -100,14 +102,7 @@ def add_sentiments_to_news(news_data):
     
     return news_data
 
-# Initialize the model on import - FAIL LOUDLY if it doesn't work
-try:
-    initialize_sentiment_model()
-except Exception as e:
-    logger.critical("❌ CRITICAL ERROR: Application startup failed - sentiment model unavailable")
-    logger.critical("The application cannot start without a working sentiment analysis model")
-    logger.critical("Fix the model loading issue and restart the application")
-    sys.exit(1)
+pass
 
 if __name__ == "__main__":
     from scraper import get_news_from_sources

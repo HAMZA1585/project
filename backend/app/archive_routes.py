@@ -481,3 +481,46 @@ def live_fetch_window():
         return jsonify({'live': deduped, 'window': {'start_date': from_iso, 'end_date': to_iso}})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@archive_bp.route('/archive/backfill-last-year', methods=['POST'])
+def backfill_last_year():
+    try:
+        payload = request.get_json() or {}
+        q = payload.get('q')
+        per_chunk = int(payload.get('per_chunk', 50))
+        now = datetime.now()
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=365)
+        cursor = start
+        total_found = 0
+        total_inserted = 0
+        while cursor < now:
+            if cursor.month == 12:
+                month_end = datetime(cursor.year + 1, 1, 1) - timedelta(seconds=1)
+            else:
+                month_end = datetime(cursor.year, cursor.month + 1, 1) - timedelta(seconds=1)
+            from_iso = cursor.isoformat()
+            to_iso = month_end.isoformat()
+            batch = []
+            batch += fetch_from_newsapi_window(from_iso, to_iso, q=q, limit=per_chunk)
+            batch += fetch_from_guardian_window(from_iso, to_iso, q=q, page_size=per_chunk)
+            existing_urls_query = db.session.query(Article.url).filter(
+                Article.date >= cursor, Article.date <= month_end
+            )
+            existing_urls = set(u[0] for u in existing_urls_query.all())
+            deduped = []
+            seen = set()
+            for a in batch:
+                u = a.get('url')
+                if not u or u in seen or u in existing_urls:
+                    continue
+                seen.add(u)
+                deduped.append(a)
+            total_found += len(deduped)
+            if deduped:
+                result = upsert_articles_task(deduped)
+                if isinstance(result, dict):
+                    total_inserted += int(result.get('inserted', 0) or 0)
+            cursor = month_end + timedelta(seconds=1)
+        return jsonify({'status': 'completed', 'found': total_found, 'inserted': total_inserted})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

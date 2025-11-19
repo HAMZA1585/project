@@ -18,6 +18,7 @@ def show_help():
     print("  python db_manager.py articles   - List all articles")
     print("  python db_manager.py trends     - List all trends")
     print("  python db_manager.py stats      - Show statistics")
+    print("  python db_manager.py fix_sentiment - Normalize and re-queue sentiment analysis")
     print("  python db_manager.py reset      - Reset database (WARNING: deletes all data)")
     print("  python db_manager.py backup     - Create backup")
     print("  python db_manager.py help       - Show this help")
@@ -162,6 +163,9 @@ def main():
         list_trends()
     elif command == "stats":
         show_stats()
+    elif command == "fix_sentiment":
+        from fix_db_data import fix_sentiment_data
+        fix_sentiment_data()
     elif command == "reset":
         reset_database()
     elif command == "backup":

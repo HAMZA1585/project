@@ -681,94 +681,90 @@ def human_like_local_scrape_task(limit=8):
         return {'queued': len(queued), 'tasks': queued}
 
 def run_dawn_scrape_sync(limit=8):
-    app = create_app()
-    with app.app_context():
+    articles = []
+    try:
+        articles = fetch_from_dawn(limit=limit)
+    except Exception:
         articles = []
-        try:
-            articles = fetch_from_dawn(limit=limit)
-        except Exception:
-            articles = []
-        added = 0
-        for a in articles:
-            url = a.get('url')
-            if not url:
-                continue
-            canon = canonicalize_url(url)
-            existing = Article.query.filter_by(url=canon).first()
-            if existing:
-                continue
-            date_val = None
-            if a.get('date'):
-                try:
-                    date_val = datetime.fromisoformat(a.get('date').replace('Z', '+00:00'))
-                except Exception:
-                    date_val = None
-            text_to_analyze = a.get('content') or a.get('title') or ''
-            sent = analyze_sentiment(text_to_analyze) if text_to_analyze else {'label': None, 'score': None}
-            inferred_loc = infer_location_from_text(a.get('title'), a.get('content'))
-            new_article = Article(
-                title=a.get('title') or '',
-                url=canon,
-                source='DAWN',
-                content=a.get('content'),
-                category=a.get('category'),
-                date=date_val,
-                location=a.get('location') or inferred_loc,
-                sentiment_label=(sent.get('label').capitalize() if sent.get('label') else None),
-                sentiment_score=sent.get('score')
-            )
+    added = 0
+    for a in articles:
+        url = a.get('url')
+        if not url:
+            continue
+        canon = canonicalize_url(url)
+        existing = Article.query.filter_by(url=canon).first()
+        if existing:
+            continue
+        date_val = None
+        if a.get('date'):
             try:
-                db.session.add(new_article)
-                db.session.commit()
-                added += 1
+                date_val = datetime.fromisoformat(a.get('date').replace('Z', '+00:00'))
             except Exception:
-                db.session.rollback()
-                continue
-        return {'found': len(articles), 'added': added}
-
-def update_dawn_missing_dates(max_rows=30):
-    app = create_app()
-    with app.app_context():
-        q = Article.query.filter(Article.source == 'DAWN', Article.date.is_(None))
-        items = q.limit(max_rows).all()
-        updated = 0
-        from app.services.scraper import HEADERS
-        import requests
-        from bs4 import BeautifulSoup
-        for art in items:
-            url = art.url
-            try:
-                r = requests.get(url, headers=HEADERS, timeout=15)
-                r.raise_for_status()
-                s = BeautifulSoup(r.content, 'html.parser')
-                tnode = s.select_one('.story__time .timestamp--time')
-                val = None
-                if tnode and tnode.get('title'):
-                    raw = tnode.get('title').strip()
-                    try:
-                        dt = datetime.strptime(raw, "%d %b, %Y %I:%M%p")
-                        val = dt
-                    except Exception:
-                        val = None
-                if not val:
-                    m = s.select_one('meta[property="article:published_time"]')
-                    if m and m.get('content'):
-                        c = m.get('content').strip()
-                        try:
-                            val = datetime.fromisoformat(c.replace('Z', '+00:00'))
-                        except Exception:
-                            val = None
-                if val:
-                    art.date = val
-                    updated += 1
-                    db.session.add(art)
-            except Exception:
-                continue
+                date_val = None
+        text_to_analyze = a.get('content') or a.get('title') or ''
+        sent = analyze_sentiment(text_to_analyze) if text_to_analyze else {'label': None, 'score': None}
+        inferred_loc = infer_location_from_text(a.get('title'), a.get('content'))
+        new_article = Article(
+            title=a.get('title') or '',
+            url=canon,
+            source='DAWN',
+            content=a.get('content'),
+            category=a.get('category'),
+            date=date_val,
+            location=a.get('location') or inferred_loc,
+            sentiment_label=(sent.get('label').capitalize() if sent.get('label') else None),
+            sentiment_score=sent.get('score')
+        )
         try:
-            if updated:
-                db.session.commit()
-            else:
-                db.session.rollback()
+            db.session.add(new_article)
+            db.session.commit()
+            added += 1
         except Exception:
             db.session.rollback()
-        return {'processed': len(items), 'updated': updated}
+            continue
+    return {'found': len(articles), 'added': added}
+
+def update_dawn_missing_dates(max_rows=30):
+    q = Article.query.filter(Article.source == 'DAWN', Article.date.is_(None))
+    items = q.limit(max_rows).all()
+    updated = 0
+    from app.services.scraper import HEADERS
+    import requests
+    from bs4 import BeautifulSoup
+    for art in items:
+        url = art.url
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=15)
+            r.raise_for_status()
+            s = BeautifulSoup(r.content, 'html.parser')
+            tnode = s.select_one('.story__time .timestamp--time')
+            val = None
+            if tnode and tnode.get('title'):
+                raw = tnode.get('title').strip()
+                try:
+                    dt = datetime.strptime(raw, "%d %b, %Y %I:%M%p")
+                    val = dt
+                except Exception:
+                    val = None
+            if not val:
+                m = s.select_one('meta(property="article:published_time"]')
+                if m and m.get('content'):
+                    c = m.get('content').strip()
+                    try:
+                        val = datetime.fromisoformat(c.replace('Z', '+00:00'))
+                    except Exception:
+                        val = None
+            if val:
+                art.date = val
+                updated += 1
+                db.session.add(art)
+        except Exception:
+            continue
+    try:
+        if updated:
+            db.session.commit()
+        else:
+            db.session.rollback()
+    except Exception:
+        db.session.rollback()
+    return {'processed': len(items), 'updated': updated}
